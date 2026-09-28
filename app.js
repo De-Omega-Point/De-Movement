@@ -8,8 +8,9 @@ const PP=window.DeMovementPassport;
 const F=window.DeMovementFlow;
 const D=window.DeMovementTrainingData;
 const I=window.DeMovementIntelligence;
+const A=window.DeMovementAssistant;
 const B=window.DeMovementBackend||{mode:'local'};
-if(!E||!L||!C||!R||!P||!PP||!F||!D||!I)throw new Error('De-Movement modules failed to load.');
+if(!E||!L||!C||!R||!P||!PP||!F||!D||!I||!A)throw new Error('De-Movement modules failed to load.');
 
 const initialPassport=PP.load();
 const initialProfile=D.loadProfile();
@@ -93,16 +94,18 @@ function visualStrip(m){
 }
 
 function setView(view){
- const next=['training','library','passport','flow'].includes(view)?view:'choose';
+ const next=['training','assistant','library','passport','flow'].includes(view)?view:'choose';
  if(state.view==='flow'&&next!=='flow'&&state.flowRunner){state.flowRunner.pause();stopFlowTicker()}
  state.view=next;
  $('#choose-view').hidden=state.view!=='choose';
  $('#training-view').hidden=state.view!=='training';
+ $('#assistant-view').hidden=state.view!=='assistant';
  $('#library-view').hidden=state.view!=='library';
  $('#passport-view').hidden=state.view!=='passport';
  $('#flow-view').hidden=state.view!=='flow';
  document.querySelectorAll('[data-view-target]').forEach(b=>b.classList.toggle('active',b.dataset.viewTarget===state.view));
  if(state.view==='training')renderTraining();
+ if(state.view==='assistant')renderAssistant();
  if(state.view==='library')renderLibrary();
  if(state.view==='passport')renderPassport();
  if(state.view==='flow')renderFlow();
@@ -277,6 +280,45 @@ $('#clear-history').onclick=()=>{
  if(!confirm('Clear your local De-Movement training history on this device?'))return;
  state.history=D.clearHistory();renderTraining();
 };
+
+
+function assistantContext(){
+ return {profile:state.profile,readiness:state.readiness,history:state.history,passport:state.passport,plan:state.plan,primary:state.primary,assignments:state.assignments};
+}
+function renderAssistantAnswer(result,question=''){
+ const root=$('#assistant-answer');if(!root)return;
+ const rec=A.recommendationFor(assistantContext());
+ const canUseRec=/why|recommend|today|session/i.test(question)&&rec.mode==='train';
+ root.innerHTML=`<article class="assistant-response">
+   <div class="assistant-response-top"><span>DE-MOVEMENT INTELLIGENCE</span><small>Evidence-bound · no automatic action</small></div>
+   <h2>${esc(result.title)}</h2>
+   <p class="assistant-response-main">${esc(result.answer)}</p>
+   ${result.evidence?.length?`<div class="assistant-evidence"><b>WHY</b><ul>${result.evidence.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+   <div class="assistant-action"><span><b>HUMAN DECISION</b>${esc(result.action||'Use your judgement before acting.')}</span>${canUseRec?'<button type="button" id="assistant-use-session">Use suggested session →</button>':''}</div>
+ </article>`;
+ const use=$('#assistant-use-session');
+ if(use)use.onclick=()=>{
+   state.primary=rec.primary;state.blend=rec.blend;state.duration=rec.duration;state.energy=rec.energy;
+   renderChooser();setView('choose');
+ };
+}
+function askMoverAssistant(question){
+ const q=String(question||'').trim();if(!q)return;
+ $('#assistant-question').value=q;
+ const result=A.moverAnswer(q,assistantContext());
+ renderAssistantAnswer(result,q);
+}
+function renderAssistant(){
+ const root=$('#assistant-answer');
+ if(root&&!root.innerHTML.trim()){
+  renderAssistantAnswer({
+   title:'I explain. You decide.',
+   answer:'Ask about today’s recommendation, your next capability, an easier option, Passport progress or a specific movement pathway.',
+   evidence:['Your profile, readiness, training history, current session and Movement Passport are the evidence sources used here.'],
+   action:'Choose a question above or type one below.'
+  });
+ }
+}
 
 function renderLibrary(){
  $('#domain-filters').innerHTML=Object.entries(L.DOMAINS).map(([key,d])=>`<button type="button" data-domain="${key}" class="${state.domain===key?'selected':''}">${esc(d.label)}</button>`).join('');
@@ -640,8 +682,10 @@ $('#start-guided').onclick=()=>{
  $('#guided-session').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
 };
 $('#edit-choices').onclick=()=>document.querySelector('.builder').scrollIntoView({behavior:'smooth'});
+document.querySelectorAll('[data-assistant-question]').forEach(b=>b.onclick=()=>askMoverAssistant(b.dataset.assistantQuestion));
+$('#assistant-form').onsubmit=e=>{e.preventDefault();askMoverAssistant($('#assistant-question').value)};
 document.querySelectorAll('[data-view-target]').forEach(b=>b.onclick=e=>{e.preventDefault();setView(b.dataset.viewTarget)});
 $('#movement-dialog').addEventListener('click',e=>{if(e.target===$('#movement-dialog'))$('#movement-dialog').close()});
 $('#passport-dialog').addEventListener('click',e=>{if(e.target===$('#passport-dialog'))$('#passport-dialog').close()});
-renderChooser();renderTraining();renderLibrary();renderPassport();renderFlow();updateAccountLink();initCloud();
+renderChooser();renderTraining();renderAssistant();renderLibrary();renderPassport();renderFlow();updateAccountLink();initCloud();
 })();
