@@ -181,6 +181,12 @@ language sql stable security definer
 set search_path=public
 as $$ select role from public.profiles where id=auth.uid() $$;
 
+create or replace function public.dm_account_active()
+returns boolean
+language sql stable security definer
+set search_path=public
+as $ select coalesce((select account_status='active' from public.profiles where id=auth.uid()),false) $;
+
 create or replace function public.dm_is_admin()
 returns boolean
 language sql stable security definer
@@ -215,27 +221,27 @@ alter table public.admin_audit_log enable row level security;
 drop policy if exists profiles_self_select on public.profiles;
 create policy profiles_self_select on public.profiles for select using (id=auth.uid() or public.dm_is_admin() or public.dm_is_active_coach_for(id));
 drop policy if exists profiles_self_update on public.profiles;
-create policy profiles_self_update on public.profiles for update using (id=auth.uid()) with check (id=auth.uid());
+create policy profiles_self_update on public.profiles for update using (id=auth.uid() and public.dm_account_active()) with check (id=auth.uid() and public.dm_account_active());
 drop policy if exists profiles_admin_all on public.profiles;
 create policy profiles_admin_all on public.profiles for all using (public.dm_is_admin()) with check (public.dm_is_admin());
 
 drop policy if exists training_profiles_mover on public.training_profiles;
-create policy training_profiles_mover on public.training_profiles for all using (mover_id=auth.uid() or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id)) with check (mover_id=auth.uid() or public.dm_is_admin());
+create policy training_profiles_mover on public.training_profiles for all using ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id)) with check ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
 drop policy if exists passport_mover on public.passport_states;
-create policy passport_mover on public.passport_states for all using (mover_id=auth.uid() or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id)) with check (mover_id=auth.uid() or public.dm_is_admin());
+create policy passport_mover on public.passport_states for all using ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id)) with check ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
 drop policy if exists readiness_access on public.readiness_checkins;
-create policy readiness_access on public.readiness_checkins for select using (mover_id=auth.uid() or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id));
+create policy readiness_access on public.readiness_checkins for select using ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id));
 drop policy if exists readiness_insert_self on public.readiness_checkins;
-create policy readiness_insert_self on public.readiness_checkins for insert with check (mover_id=auth.uid());
+create policy readiness_insert_self on public.readiness_checkins for insert with check (mover_id=auth.uid() and public.dm_account_active());
 drop policy if exists training_logs_access on public.training_logs;
-create policy training_logs_access on public.training_logs for select using (mover_id=auth.uid() or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id));
+create policy training_logs_access on public.training_logs for select using ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id));
 drop policy if exists training_logs_insert_self on public.training_logs;
-create policy training_logs_insert_self on public.training_logs for insert with check (mover_id=auth.uid());
+create policy training_logs_insert_self on public.training_logs for insert with check (mover_id=auth.uid() and public.dm_account_active());
 drop policy if exists saved_flows_owner on public.saved_flows;
-create policy saved_flows_owner on public.saved_flows for all using (mover_id=auth.uid() or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id)) with check (mover_id=auth.uid() or public.dm_is_admin());
+create policy saved_flows_owner on public.saved_flows for all using ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id)) with check ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
 
 drop policy if exists coach_movers_access on public.coach_movers;
-create policy coach_movers_access on public.coach_movers for select using (coach_id=auth.uid() or mover_id=auth.uid() or public.dm_is_admin());
+create policy coach_movers_access on public.coach_movers for select using ((coach_id=auth.uid() and public.dm_account_active()) or (mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
 drop policy if exists coach_movers_admin_write on public.coach_movers;
 create policy coach_movers_admin_write on public.coach_movers for all using (public.dm_is_admin()) with check (public.dm_is_admin());
 
@@ -247,7 +253,7 @@ create policy coach_notes_insert on public.coach_notes for insert with check (
 );
 
 drop policy if exists assignments_access on public.coach_assignments;
-create policy assignments_access on public.coach_assignments for select using (coach_id=auth.uid() or mover_id=auth.uid() or public.dm_is_admin());
+create policy assignments_access on public.coach_assignments for select using ((coach_id=auth.uid() and public.dm_account_active()) or (mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
 drop policy if exists assignments_coach_insert on public.coach_assignments;
 create policy assignments_coach_insert on public.coach_assignments for insert with check (
   coach_id=auth.uid() and exists(select 1 from public.coach_movers cm where cm.id=relationship_id and cm.coach_id=auth.uid() and cm.mover_id=coach_assignments.mover_id and cm.status='active')
@@ -336,3 +342,22 @@ grant execute on function public.dm_claim_coach_invite(text) to authenticated;
 grant execute on function public.dm_admin_set_role(uuid,public.dm_role) to authenticated;
 grant execute on function public.dm_admin_set_account_status(uuid,public.dm_account_status) to authenticated;
 grant execute on function public.dm_admin_transfer_mover(uuid,uuid) to authenticated;
+
+
+-- Explicit browser grants. RLS still decides which rows are visible/writable.
+grant select on table public.profiles to authenticated;
+revoke update on table public.profiles from authenticated;
+grant update(display_name) on table public.profiles to authenticated;
+
+grant select,insert,update on table public.training_profiles to authenticated;
+grant select,insert,update on table public.passport_states to authenticated;
+grant select,insert on table public.readiness_checkins to authenticated;
+grant select,insert on table public.training_logs to authenticated;
+grant select,insert,update,delete on table public.saved_flows to authenticated;
+grant select on table public.coach_movers to authenticated;
+grant select,insert on table public.coach_notes to authenticated;
+grant select,insert,update on table public.coach_assignments to authenticated;
+grant select on table public.coach_invites to authenticated;
+grant select on table public.admin_audit_log to authenticated;
+
+grant execute on function public.dm_account_active() to authenticated;
