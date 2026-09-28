@@ -127,7 +127,7 @@ function compose(input={}){
    else if(b.id==='skill')ids=choose(cfg.skill,count,used);
    else if(b.id==='strength')ids=choose(cfg.strength,count,used);
    else if(b.id==='blend')ids=choose(BLEND_MAP[base.blend]||[],count,used);
-   else if(b.id==='range')ids=choose(cfg.range,count,used);
+   else if(b.id==='range'){ids=choose(cfg.range,count,used);if(ids.length<count)ids=ids.concat(choose(cfg.range,count-ids.length,used,true));}
    const movements=ids.map(id=>{
      const m=L.get(id),p=protocol(id,base.energy);
      return {
