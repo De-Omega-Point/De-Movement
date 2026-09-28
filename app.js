@@ -3,9 +3,11 @@ const E=window.DeMovementEngine;
 const L=window.DeMovementLibrary;
 const C=window.DeMovementComposer;
 const R=window.DeMovementRunner;
-if(!E||!L||!C||!R)throw new Error('De-Movement modules failed to load.');
+const P=window.DeMovementPaths;
+const PP=window.DeMovementPassport;
+if(!E||!L||!C||!R||!P||!PP)throw new Error('De-Movement modules failed to load.');
 
-const state={primary:'control',blend:'none',duration:40,energy:'steady',view:'choose',domain:'all',plan:null,runner:null,tick:null};
+const state={primary:'control',blend:'none',duration:40,energy:'steady',view:'choose',domain:'all',plan:null,runner:null,tick:null,passport:PP.load()};
 const $=s=>document.querySelector(s);
 const colors={lime:'#b8ff56',coral:'#ff7a66',violet:'#b39cff',aqua:'#70e6d2',gold:'#ffd26f',blue:'#77aefc'};
 const domainColours={calisthenics:'#b8ff56',locomotion:'#70e6d2',acrobatics:'#ffd26f',mobility:'#77aefc'};
@@ -83,11 +85,13 @@ function visualStrip(m){
 }
 
 function setView(view){
- state.view=view==='library'?'library':'choose';
+ state.view=['library','passport'].includes(view)?view:'choose';
  $('#choose-view').hidden=state.view!=='choose';
  $('#library-view').hidden=state.view!=='library';
+ $('#passport-view').hidden=state.view!=='passport';
  document.querySelectorAll('[data-view-target]').forEach(b=>b.classList.toggle('active',b.dataset.viewTarget===state.view));
  if(state.view==='library')renderLibrary();
+ if(state.view==='passport')renderPassport();
  window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
 }
 
@@ -132,6 +136,90 @@ function renderLibrary(){
  </button>`).join('');
  document.querySelectorAll('[data-domain]').forEach(b=>b.onclick=()=>{state.domain=b.dataset.domain;renderLibrary()});
  document.querySelectorAll('[data-movement]').forEach(b=>b.onclick=()=>openMovement(b.dataset.movement));
+}
+
+
+const statusLabels={available:'Available',practising:'Practising',ready:'Ready',mastered:'Mastered',locked:'Locked'};
+function passportAccent(path){return P.ACCENTS[path.accent]||'#b8ff56'}
+function passportStatus(pathId,nodeId){return PP.effectiveStatus(state.passport,pathId,nodeId)}
+function passportIcon(status){return {available:'○',practising:'◐',ready:'◇',mastered:'✓',locked:'·'}[status]||'·'}
+
+function renderPassport(){
+  const sum=PP.summary(state.passport);
+  $('#passport-summary').innerHTML=`
+    <article><span>MASTERED</span><strong>${sum.mastered}</strong><small>owned capabilities</small></article>
+    <article><span>PRACTISING</span><strong>${sum.practising}</strong><small>active skills</small></article>
+    <article><span>READY</span><strong>${sum.ready}</strong><small>awaiting human decision</small></article>
+    <article><span>AVAILABLE</span><strong>${sum.available}</strong><small>open next steps</small></article>`;
+  $('#passport-paths').innerHTML=P.PATHS.map(path=>{
+    const prog=PP.progress(state.passport,path.id),focus=PP.nextFocus(state.passport,path.id);
+    return `<article class="passport-path" style="--path:${passportAccent(path)}">
+      <header><div><span class="path-icon">${esc(path.icon)}</span><p class="eyebrow">${esc(path.category)}</p><h2>${esc(path.name)}</h2></div><div class="path-progress"><b>${prog.mastered}/${prog.total}</b><small>mastered</small></div></header>
+      <p>${esc(path.promise)}</p>
+      <div class="path-bar"><span style="width:${prog.percent}%"></span></div>
+      <div class="path-nodes">${path.nodes.map((node,i)=>{
+        const s=passportStatus(path.id,node.id);
+        return `<button type="button" class="path-node status-${s}" data-path="${path.id}" data-node="${node.id}" aria-label="${esc(node.name)}: ${statusLabels[s]}">
+          <span class="node-index">${String(i+1).padStart(2,'0')}</span>
+          <span class="node-mark">${passportIcon(s)}</span>
+          <b>${esc(node.name)}</b>
+          <small>${statusLabels[s]}</small>
+        </button>`;
+      }).join('')}</div>
+      <footer><span>Next focus</span><b>${esc(focus?.name||'Path complete')}</b></footer>
+    </article>`;
+  }).join('');
+  document.querySelectorAll('[data-path][data-node]').forEach(b=>b.onclick=()=>openPassportNode(b.dataset.path,b.dataset.node));
+}
+
+function openPassportNode(pathId,nodeId){
+  const path=P.get(pathId),node=P.node(pathId,nodeId);if(!path||!node)return;
+  const dlg=$('#passport-dialog'),root=$('#passport-dialog-content');
+  const status=passportStatus(pathId,nodeId),checked=state.passport.criteria?.[pathId]?.[nodeId]||[];
+  const all=PP.criteriaMet(state.passport,pathId,nodeId);
+  const linked=node.movementId?L.get(node.movementId):null;
+  const actions=[];
+  if(status==='available')actions.push('<button type="button" class="passport-primary" data-passport-action="practising">Start practising</button>');
+  if(status==='practising')actions.push(`<button type="button" class="passport-primary" data-passport-action="ready" ${all?'':'disabled'}>${all?'Mark ready':'Complete checklist first'}</button>`);
+  if(status==='ready')actions.push('<button type="button" class="passport-primary" data-passport-action="mastered">Mark mastered</button>');
+  if(status==='mastered')actions.push('<button type="button" class="passport-secondary" data-passport-action="practising">Reassess this skill</button>');
+  root.innerHTML=`<div class="passport-detail" style="--path:${passportAccent(path)}">
+    <div class="dialog-top"><div><p class="eyebrow">${esc(path.name)} · ${esc(node.level)}</p><h2>${esc(node.name)}</h2></div><button type="button" class="dialog-close" aria-label="Close Passport node">×</button></div>
+    <div class="passport-status-line"><span class="status-${status}">${passportIcon(status)} ${statusLabels[status]}</span><small>Progress changes only when you choose an action.</small></div>
+    ${linked?visualStrip(linked):'<div class="path-placeholder"><span>'+esc(path.icon)+'</span><b>Path movement</b><small>Dedicated visual will be added as the library expands.</small></div>'}
+    <section class="passport-criteria">
+      <span class="detail-label">READINESS CHECKLIST</span>
+      <p>Use these as coaching gates. Tick only what you can demonstrate consistently today.</p>
+      <div>${node.criteria.map((item,i)=>`<label><input type="checkbox" data-passport-criterion="${i}" ${checked.includes(i)?'checked':''} ${status==='locked'?'disabled':''}><span>${esc(item)}</span></label>`).join('')}</div>
+    </section>
+    <div class="passport-actions">
+      ${actions.join('')}
+      ${linked?'<button type="button" class="passport-secondary" data-linked-movement="'+esc(linked.id)+'">Open movement details</button>':''}
+      ${status!=='locked'?'<button type="button" class="passport-text" data-passport-reset>Reset this node</button>':''}
+    </div>
+    ${status==='locked'?'<p class="passport-gate">Master the previous node before starting this progression.</p>':''}
+  </div>`;
+  root.querySelector('.dialog-close').onclick=()=>dlg.close();
+  root.querySelectorAll('[data-passport-criterion]').forEach(cb=>cb.onchange=()=>{
+    state.passport=PP.save(PP.setCriterion(state.passport,pathId,nodeId,Number(cb.dataset.passportCriterion),cb.checked));
+    openPassportNode(pathId,nodeId);renderPassport();
+  });
+  root.querySelectorAll('[data-passport-action]').forEach(b=>b.onclick=()=>{
+    if(b.disabled)return;
+    if(status==='mastered'&&b.dataset.passportAction==='practising'&&!confirm('Reassessing this skill will lock later nodes in this path. Continue?'))return;
+    try{
+      state.passport=PP.save(PP.setStatus(state.passport,pathId,nodeId,b.dataset.passportAction));
+      openPassportNode(pathId,nodeId);renderPassport();
+    }catch(e){alert(e.message)}
+  });
+  const reset=root.querySelector('[data-passport-reset]');
+  if(reset)reset.onclick=()=>{
+    if(!confirm('Reset this node? Later nodes in this path will also be locked.'))return;
+    try{state.passport=PP.save(PP.setStatus(state.passport,pathId,nodeId,'locked'));openPassportNode(pathId,nodeId);renderPassport()}catch(e){alert(e.message)}
+  };
+  const linkedBtn=root.querySelector('[data-linked-movement]');
+  if(linkedBtn)linkedBtn.onclick=()=>{dlg.close();openMovement(linkedBtn.dataset.linkedMovement)};
+  if(!dlg.open)dlg.showModal();
 }
 
 function openMovement(id){
@@ -247,5 +335,6 @@ $('#start-guided').onclick=()=>{
 $('#edit-choices').onclick=()=>document.querySelector('.builder').scrollIntoView({behavior:'smooth'});
 document.querySelectorAll('[data-view-target]').forEach(b=>b.onclick=e=>{e.preventDefault();setView(b.dataset.viewTarget)});
 $('#movement-dialog').addEventListener('click',e=>{if(e.target===$('#movement-dialog'))$('#movement-dialog').close()});
-renderChooser();renderLibrary();
+$('#passport-dialog').addEventListener('click',e=>{if(e.target===$('#passport-dialog'))$('#passport-dialog').close()});
+renderChooser();renderLibrary();renderPassport();
 })();
