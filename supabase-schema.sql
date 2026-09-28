@@ -185,7 +185,7 @@ create or replace function public.dm_account_active()
 returns boolean
 language sql stable security definer
 set search_path=public
-as $ select coalesce((select account_status='active' from public.profiles where id=auth.uid()),false) $;
+as $dm$ select coalesce((select account_status='active' from public.profiles where id=auth.uid()),false) $dm$;
 
 create or replace function public.dm_is_admin()
 returns boolean
@@ -246,23 +246,23 @@ drop policy if exists coach_movers_admin_write on public.coach_movers;
 create policy coach_movers_admin_write on public.coach_movers for all using (public.dm_is_admin()) with check (public.dm_is_admin());
 
 drop policy if exists coach_notes_access on public.coach_notes;
-create policy coach_notes_access on public.coach_notes for select using (coach_id=auth.uid() or public.dm_is_admin());
+create policy coach_notes_access on public.coach_notes for select using ((coach_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
 drop policy if exists coach_notes_insert on public.coach_notes;
 create policy coach_notes_insert on public.coach_notes for insert with check (
-  coach_id=auth.uid() and exists(select 1 from public.coach_movers cm where cm.id=relationship_id and cm.coach_id=auth.uid() and cm.status='active')
+  coach_id=auth.uid() and public.dm_account_active() and exists(select 1 from public.coach_movers cm where cm.id=relationship_id and cm.coach_id=auth.uid() and cm.status='active')
 );
 
 drop policy if exists assignments_access on public.coach_assignments;
 create policy assignments_access on public.coach_assignments for select using ((coach_id=auth.uid() and public.dm_account_active()) or (mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
 drop policy if exists assignments_coach_insert on public.coach_assignments;
 create policy assignments_coach_insert on public.coach_assignments for insert with check (
-  coach_id=auth.uid() and exists(select 1 from public.coach_movers cm where cm.id=relationship_id and cm.coach_id=auth.uid() and cm.mover_id=coach_assignments.mover_id and cm.status='active')
+  coach_id=auth.uid() and public.dm_account_active() and exists(select 1 from public.coach_movers cm where cm.id=relationship_id and cm.coach_id=auth.uid() and cm.mover_id=coach_assignments.mover_id and cm.status='active')
 );
 drop policy if exists assignments_mover_update on public.coach_assignments;
-create policy assignments_mover_update on public.coach_assignments for update using (mover_id=auth.uid() or coach_id=auth.uid() or public.dm_is_admin()) with check (mover_id=auth.uid() or coach_id=auth.uid() or public.dm_is_admin());
+create policy assignments_mover_update on public.coach_assignments for update using (((mover_id=auth.uid() or coach_id=auth.uid()) and public.dm_account_active()) or public.dm_is_admin()) with check (((mover_id=auth.uid() or coach_id=auth.uid()) and public.dm_account_active()) or public.dm_is_admin());
 
 drop policy if exists invites_coach_read on public.coach_invites;
-create policy invites_coach_read on public.coach_invites for select using (coach_id=auth.uid() or public.dm_is_admin());
+create policy invites_coach_read on public.coach_invites for select using ((coach_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
 drop policy if exists audit_admin_read on public.admin_audit_log;
 create policy audit_admin_read on public.admin_audit_log for select using (public.dm_is_admin());
 
