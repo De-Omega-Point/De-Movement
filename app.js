@@ -1,9 +1,11 @@
 (()=>{'use strict';
 const E=window.DeMovementEngine;
 const L=window.DeMovementLibrary;
-if(!E||!L)throw new Error('De-Movement modules failed to load.');
+const C=window.DeMovementComposer;
+const R=window.DeMovementRunner;
+if(!E||!L||!C||!R)throw new Error('De-Movement modules failed to load.');
 
-const state={primary:'control',blend:'none',duration:40,energy:'steady',view:'choose',domain:'all'};
+const state={primary:'control',blend:'none',duration:40,energy:'steady',view:'choose',domain:'all',plan:null,runner:null,tick:null};
 const $=s=>document.querySelector(s);
 const colors={lime:'#b8ff56',coral:'#ff7a66',violet:'#b39cff',aqua:'#70e6d2',gold:'#ffd26f',blue:'#77aefc'};
 const domainColours={calisthenics:'#b8ff56',locomotion:'#70e6d2',acrobatics:'#ffd26f',mobility:'#77aefc'};
@@ -44,7 +46,25 @@ const poses={
  splitInvert:{h:[60,66],s:[[60,58,60,40],[60,47,40,69],[60,47,80,69],[60,40,40,20],[60,40,82,18]],ground:71},
  wideStand:{h:[60,18],s:[[60,26,60,49],[60,35,43,43],[60,35,77,43],[60,49,31,73],[60,49,91,73]],ground:75},
  cossackMid:{h:[55,24],s:[[55,32,56,50],[56,38,38,49],[56,38,73,48],[56,50,39,67],[39,67,27,72],[56,50,80,61],[80,61,94,62]],ground:74},
- cossackDeep:{h:[49,31],s:[[49,39,52,54],[52,44,35,56],[52,44,71,54],[52,54,35,66],[35,66,24,72],[52,54,82,61],[82,61,98,61]],ground:73}
+ cossackDeep:{h:[49,31],s:[[49,39,52,54],[52,44,35,56],[52,44,71,54],[52,54,35,66],[35,66,24,72],[52,54,82,61],[82,61,98,61]],ground:73},
+ wristRock:{h:[78,40],s:[[71,44,55,50],[55,50,38,56],[68,46,73,73],[58,49,55,74],[38,56,29,74],[38,56,48,74]],ground:77},
+ wristRockDeep:{h:[74,42],s:[[67,46,51,52],[51,52,34,58],[63,48,70,74],[55,51,53,75],[34,58,24,75],[34,58,44,75]],ground:77},
+ scapSoft:{h:[85,39],s:[[78,44,58,50],[58,50,35,56],[73,46,74,74],[62,49,61,75],[35,56,20,68],[35,56,25,73]],ground:78},
+ scapPush:{h:[82,35],s:[[75,40,55,47],[55,47,32,54],[69,43,75,74],[59,46,64,75],[32,54,17,67],[32,54,22,73]],ground:78},
+ activeHang:{h:[60,33],s:[[60,41,60,62],[60,44,43,18],[60,44,77,18],[60,62,49,81],[60,62,71,81]],bar:17},
+ activeHangTall:{h:[60,31],s:[[60,39,60,60],[60,42,44,18],[60,42,76,18],[60,60,49,80],[60,60,71,80]],bar:17},
+ hollowPrep:{h:[43,56],s:[[49,57,61,57],[49,57,39,66],[61,57,74,65],[49,57,37,45],[61,57,75,45]],ground:72},
+ hollow:{h:[34,58],s:[[41,58,58,56],[41,58,24,50],[58,56,78,50],[41,58,25,68],[58,56,78,66]],ground:72},
+ hollowLong:{h:[29,60],s:[[36,59,57,55],[36,59,14,48],[57,55,88,47],[36,59,13,69],[57,55,91,68]],ground:72},
+ pikeSit:{h:[42,25],s:[[42,33,45,54],[45,54,28,68],[45,54,71,63],[71,63,93,63],[45,54,65,63]],ground:70},
+ pikeLift:{h:[42,24],s:[[42,32,45,53],[45,53,29,68],[45,53,70,57],[70,57,91,55],[45,53,65,58]],ground:70},
+ pikeLiftHigh:{h:[42,23],s:[[42,31,45,52],[45,52,29,68],[45,52,67,49],[67,49,89,46],[45,52,62,52]],ground:70},
+ ninetySit:{h:[55,22],s:[[55,30,55,49],[55,37,40,46],[55,37,71,46],[55,49,39,63],[39,63,25,63],[55,49,68,61],[68,61,79,73]],ground:74},
+ ninetySwitch:{h:[56,24],s:[[56,32,56,50],[56,39,41,47],[56,39,72,47],[56,50,42,66],[42,66,29,72],[56,50,73,63],[73,63,88,66]],ground:74},
+ ninetyOpen:{h:[58,23],s:[[58,31,58,49],[58,38,43,47],[58,38,74,46],[58,49,43,61],[43,61,31,70],[58,49,77,60],[77,60,92,69]],ground:74},
+ splitMid:{h:[50,22],s:[[50,30,52,50],[52,37,35,46],[52,37,70,47],[52,50,36,65],[36,65,21,72],[52,50,75,64],[75,64,91,70]],ground:74},
+ splitDeep:{h:[50,29],s:[[50,37,52,54],[52,44,34,49],[52,44,70,50],[52,54,34,68],[34,68,20,72],[52,54,78,65],[78,65,95,70]],ground:74},
+ squatReach:{h:[55,25],s:[[55,33,57,53],[57,40,35,31],[57,40,78,32],[57,53,39,68],[39,68,26,72],[57,53,76,68],[76,68,91,72]],ground:74}
 };
 
 function poseSvg(key,label=''){
@@ -139,7 +159,91 @@ function openMovement(id){
 
 $('#duration-control').onclick=e=>{const b=e.target.closest('[data-duration]');if(!b)return;state.duration=Number(b.dataset.duration);renderChooser()};
 $('#energy-control').onclick=e=>{const b=e.target.closest('[data-energy]');if(!b)return;state.energy=b.dataset.energy;renderChooser()};
-$('#build-session').onclick=()=>{const s=renderSession();$('#plan-title').textContent=s.title;$('#plan-objective').textContent=s.objective;$('#block-list').innerHTML=s.blocks.map((b,i)=>`<article class="block"><span class="block-num">0${i+1}</span><h3>${esc(b.label)}</h3><p>${esc(b.purpose)}</p><span class="minutes">${b.minutes} MIN</span></article>`).join('');$('#session-plan').hidden=false;$('#session-plan').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})};
+function planMovementCard(m){
+ const colour=domainColours[m.domain]||'#b8ff56';
+ return `<button type="button" class="plan-movement" data-movement="${m.id}" style="--domain:${colour}">
+   <div class="plan-movement-visual">${poseSvg(m.visual[1],m.variation===m.name?'CURRENT':'EASIER')}</div>
+   <div class="plan-movement-copy">
+     <span>${esc(m.level)} · ${esc(m.domain)}</span>
+     <b>${esc(m.variation)}</b>
+     <small>${esc(m.dose)}</small>
+     <em>${esc(m.success)}</em>
+   </div>
+ </button>`;
+}
+function renderPlan(plan){
+ $('#plan-title').textContent=plan.title;
+ $('#plan-objective').textContent=plan.objective;
+ $('#plan-summary').textContent=`${plan.movementCount} movements · ${plan.totalSets} planned sets · ${plan.duration} minutes · ${E.ENERGY[plan.energy].label.toLowerCase()} energy`;
+ $('#block-list').innerHTML=plan.blocks.map((b,i)=>{
+   const moves=b.movements.length?b.movements.map(planMovementCard).join(''):`<div class="reflection-card"><b>Reflect</b><span>${plan.reflection.map(esc).join(' · ')}</span></div>`;
+   return `<article class="block session-block"><div class="block-heading"><div><span class="block-num">0${i+1}</span><h3>${esc(b.label)}</h3></div><span class="minutes">${b.minutes} MIN</span></div><p>${esc(b.purpose)}</p><div class="block-movements">${moves}</div></article>`;
+ }).join('');
+ $('#block-list').querySelectorAll('[data-movement]').forEach(b=>b.onclick=()=>openMovement(b.dataset.movement));
+}
+$('#build-session').onclick=()=>{
+ state.plan=C.compose(state);
+ renderPlan(state.plan);
+ $('#session-plan').hidden=false;
+ $('#guided-session').hidden=true;
+ $('#session-plan').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+};
+function mmss(n){n=Math.max(0,Number(n)||0);return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
+function stopTicker(){if(state.tick){clearInterval(state.tick);state.tick=null}}
+function ensureTicker(){
+ stopTicker();
+ if(!state.runner)return;
+ const snap=state.runner.snapshot();
+ if(['work','rest'].includes(snap.phase)&&snap.remaining>0){
+   state.tick=setInterval(()=>{state.runner.tick();renderRunner()},1000);
+ }
+}
+function renderRunner(){
+ const root=$('#runner-card');
+ if(!state.runner||!state.plan){root.innerHTML='';return}
+ const snap=state.runner.snapshot();
+ if(snap.finished){
+   stopTicker();
+   root.innerHTML=`<div class="runner-finished"><span class="runner-check">✓</span><p class="eyebrow">SESSION COMPLETE</p><h2>${esc(state.plan.title)}</h2><p>You completed ${snap.completedSets} planned sets. Before you leave, note your effort, control and confidence.</p><div class="reflection-row">${state.plan.reflection.map(x=>`<span>${esc(x)}</span>`).join('')}</div><button type="button" class="ghost" id="close-runner">Return to session map</button></div>`;
+   $('#close-runner').onclick=()=>{$('#guided-session').hidden=true;$('#session-plan').scrollIntoView({behavior:'smooth'})};
+   return;
+ }
+ const cur=snap.current,m=L.get(cur.id),timed=['hold','time'].includes(cur.protocol.kind);
+ const isRest=snap.phase==='rest';
+ const working=snap.phase==='work';
+ let control='';
+ if(isRest){
+   control=`<div class="runner-timer rest"><small>REST</small><strong>${mmss(snap.remaining)}</strong></div><button type="button" class="runner-primary" id="skip-rest">Skip rest →</button>`;
+ }else if(timed&&working){
+   control=`<div class="runner-timer"><small>WORK</small><strong>${mmss(snap.remaining)}</strong></div><button type="button" class="runner-secondary" id="finish-timed">Finish set now</button>`;
+ }else if(timed){
+   control=`<div class="runner-ready"><small>TIMED SET</small><strong>${cur.protocol.seconds} sec</strong></div><button type="button" class="runner-primary" id="start-timed">Start timed set →</button>`;
+ }else{
+   control=`<div class="runner-ready"><small>DOSE</small><strong>${esc(cur.dose)}</strong></div><button type="button" class="runner-primary" id="complete-reps">Set complete →</button>`;
+ }
+ root.innerHTML=`<div class="runner-shell" style="--domain:${domainColours[m.domain]||'#b8ff56'}">
+   <div class="runner-top"><span>${esc(cur.blockLabel)}</span><span>Set ${cur.currentSet} / ${cur.totalSets}</span></div>
+   <div class="runner-grid">
+     <div class="runner-visual">${visualStrip(m)}</div>
+     <div class="runner-copy"><p class="eyebrow">${esc(L.DOMAINS[m.domain].label)} · ${esc(m.level)}</p><h2>${esc(cur.variation)}</h2><p>${esc(cur.objective)}</p><div class="runner-cues"><b>Remember</b>${cur.cues.map(x=>`<span>${esc(x)}</span>`).join('')}</div></div>
+   </div>
+   <div class="runner-controls">${control}</div>
+   <div class="runner-progress"><span style="width:${Math.round((snap.completedSets/Math.max(1,state.plan.totalSets))*100)}%"></span></div>
+   <div class="runner-foot"><span>${snap.completedSets} / ${state.plan.totalSets} sets complete</span><button type="button" id="movement-info">Movement details</button></div>
+ </div>`;
+ const info=$('#movement-info');if(info)info.onclick=()=>openMovement(cur.id);
+ const skip=$('#skip-rest');if(skip)skip.onclick=()=>{state.runner.skipRest();renderRunner()};
+ const start=$('#start-timed');if(start)start.onclick=()=>{state.runner.start();renderRunner()};
+ const done=$('#finish-timed');if(done)done.onclick=()=>{state.runner.completeSet();renderRunner()};
+ const reps=$('#complete-reps');if(reps)reps.onclick=()=>{state.runner.completeSet();renderRunner()};
+ ensureTicker();
+}
+$('#start-guided').onclick=()=>{
+ if(!state.plan){state.plan=C.compose(state);renderPlan(state.plan)}
+ stopTicker();state.runner=new R.Runner(state.plan);
+ $('#guided-session').hidden=false;renderRunner();
+ $('#guided-session').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+};
 $('#edit-choices').onclick=()=>document.querySelector('.builder').scrollIntoView({behavior:'smooth'});
 document.querySelectorAll('[data-view-target]').forEach(b=>b.onclick=e=>{e.preventDefault();setView(b.dataset.viewTarget)});
 $('#movement-dialog').addEventListener('click',e=>{if(e.target===$('#movement-dialog'))$('#movement-dialog').close()});
