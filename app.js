@@ -5,9 +5,11 @@ const C=window.DeMovementComposer;
 const R=window.DeMovementRunner;
 const P=window.DeMovementPaths;
 const PP=window.DeMovementPassport;
-if(!E||!L||!C||!R||!P||!PP)throw new Error('De-Movement modules failed to load.');
+const F=window.DeMovementFlow;
+if(!E||!L||!C||!R||!P||!PP||!F)throw new Error('De-Movement modules failed to load.');
 
-const state={primary:'control',blend:'none',duration:40,energy:'steady',view:'choose',domain:'all',plan:null,runner:null,tick:null,passport:PP.load()};
+const initialPassport=PP.load();
+const state={primary:'control',blend:'none',duration:40,energy:'steady',view:'choose',domain:'all',plan:null,runner:null,tick:null,passport:initialPassport,flow:F.load(initialPassport),flowFamily:'all',flowPlan:null,flowRunner:null,flowTick:null};
 const $=s=>document.querySelector(s);
 const colors={lime:'#b8ff56',coral:'#ff7a66',violet:'#b39cff',aqua:'#70e6d2',gold:'#ffd26f',blue:'#77aefc'};
 const domainColours={calisthenics:'#b8ff56',locomotion:'#70e6d2',acrobatics:'#ffd26f',mobility:'#77aefc'};
@@ -41,6 +43,7 @@ const poses={
  crabLift:{h:[46,28],s:[[46,36,56,48],[56,48,70,58],[52,42,31,70],[60,51,81,71],[70,58,45,70]],ground:74},
  crabTravel:{h:[41,29],s:[[41,37,54,47],[54,47,71,55],[50,42,24,70],[60,50,86,69],[71,55,45,72]],ground:74},
  rock:{h:[55,44],s:[[55,51,49,61],[49,61,39,67],[49,61,61,68],[50,55,36,48],[50,55,64,48]],arc:true},
+ rockBack:{h:[68,53],s:[[62,55,50,60],[50,60,39,55],[50,60,58,70],[50,56,37,47],[50,56,64,48]],arc:true},
  tuckRoll:{h:[63,52],s:[[58,54,47,61],[47,61,40,54],[47,61,55,70],[55,70,67,65]],arc:true},
  stand:{h:[60,19],s:[[60,27,60,51],[60,35,43,46],[60,35,78,46],[60,51,48,77],[60,51,73,77]],ground:79},
  lunge:{h:[48,20],s:[[48,28,51,51],[51,36,32,47],[51,36,70,52],[51,51,34,69],[34,69,18,73],[51,51,75,67],[75,67,91,70]],ground:75},
@@ -85,13 +88,17 @@ function visualStrip(m){
 }
 
 function setView(view){
- state.view=['library','passport'].includes(view)?view:'choose';
+ const next=['library','passport','flow'].includes(view)?view:'choose';
+ if(state.view==='flow'&&next!=='flow'&&state.flowRunner){state.flowRunner.pause();stopFlowTicker()}
+ state.view=next;
  $('#choose-view').hidden=state.view!=='choose';
  $('#library-view').hidden=state.view!=='library';
  $('#passport-view').hidden=state.view!=='passport';
+ $('#flow-view').hidden=state.view!=='flow';
  document.querySelectorAll('[data-view-target]').forEach(b=>b.classList.toggle('active',b.dataset.viewTarget===state.view));
  if(state.view==='library')renderLibrary();
  if(state.view==='passport')renderPassport();
+ if(state.view==='flow')renderFlow();
  window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
 }
 
