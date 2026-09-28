@@ -46,4 +46,17 @@ Phase 1 is ready to advance when a user can:
 
 ## Status
 
-**Phase 1 — in build**
+**Phase 4 — Movement Paths + Passport in verification**
+
+
+## Current product capabilities
+
+- intention-first movement chooser
+- deterministic session composer
+- guided workout runner with work/rest handling
+- visual movement library with regressions and progressions
+- seven capability pathways
+- local Movement Passport with human-controlled progression
+- readiness criteria and prerequisite gating
+
+The Passport is deliberately not an automatic skill-unlocking system. Criteria inform the human decision; they do not make it.
