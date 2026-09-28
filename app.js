@@ -150,6 +150,13 @@ const statusLabels={available:'Available',practising:'Practising',ready:'Ready',
 function passportAccent(path){return P.ACCENTS[path.accent]||'#b8ff56'}
 function passportStatus(pathId,nodeId){return PP.effectiveStatus(state.passport,pathId,nodeId)}
 function passportIcon(status){return {available:'○',practising:'◐',ready:'◇',mastered:'✓',locked:'·'}[status]||'·'}
+function syncFlowWithPassport(){
+  state.flow=F.save({...state.flow,sequence:F.normaliseSequence(state.flow.sequence,state.passport)},state.passport);
+  state.flowPlan=null;
+  if(state.flowRunner){state.flowRunner.pause();state.flowRunner=null;stopFlowTicker()}
+  const player=$('#flow-player');if(player)player.hidden=true;
+  if(state.view==='flow')renderFlow();
+}
 
 function renderPassport(){
   const sum=PP.summary(state.passport);
@@ -216,18 +223,149 @@ function openPassportNode(pathId,nodeId){
     if(status==='mastered'&&b.dataset.passportAction==='practising'&&!confirm('Reassessing this skill will lock later nodes in this path. Continue?'))return;
     try{
       state.passport=PP.save(PP.setStatus(state.passport,pathId,nodeId,b.dataset.passportAction));
-      openPassportNode(pathId,nodeId);renderPassport();
+      syncFlowWithPassport();openPassportNode(pathId,nodeId);renderPassport();
     }catch(e){alert(e.message)}
   });
   const reset=root.querySelector('[data-passport-reset]');
   if(reset)reset.onclick=()=>{
     if(!confirm('Reset this node? Later nodes in this path will also be locked.'))return;
-    try{state.passport=PP.save(PP.setStatus(state.passport,pathId,nodeId,'locked'));openPassportNode(pathId,nodeId);renderPassport()}catch(e){alert(e.message)}
+    try{state.passport=PP.save(PP.setStatus(state.passport,pathId,nodeId,'locked'));syncFlowWithPassport();openPassportNode(pathId,nodeId);renderPassport()}catch(e){alert(e.message)}
   };
   const linkedBtn=root.querySelector('[data-linked-movement]');
   if(linkedBtn)linkedBtn.onclick=()=>{dlg.close();openMovement(linkedBtn.dataset.linkedMovement)};
   if(!dlg.open)dlg.showModal();
 }
+
+
+const flowFamilies={
+  all:'All',
+  ground:'Ground',
+  acro:'Soft Acrobatics',
+  range:'Range',
+  anchor:'Skill Anchors'
+};
+function flowFamilyLabel(key){return flowFamilies[key]||key}
+function flowPersist(next){state.flow=F.save(next,state.passport);state.flowPlan=null}
+function flowMoveName(id){return L.get(id)?.name||id}
+
+function renderFlow(){
+  const available=F.eligible(state.passport);
+  const filtered=state.flowFamily==='all'?available:available.filter(x=>x.flow.family===state.flowFamily);
+  $('#flow-eligible-count').textContent=available.length+' available';
+  $('#flow-family-filters').innerHTML=Object.entries(flowFamilies).map(([key,label])=>`<button type="button" data-flow-family="${key}" class="${state.flowFamily===key?'selected':''}">${esc(label)}</button>`).join('');
+  $('#flow-palette').innerHTML=filtered.length?filtered.map(m=>{
+    const isLast=state.flow.sequence[state.flow.sequence.length-1]===m.id;
+    const maxed=state.flow.sequence.length>=F.MAX_MOVES;
+    return `<button type="button" class="flow-palette-move" data-flow-add="${m.id}" style="--flow:${domainColours[m.domain]||'#b8ff56'}" ${isLast||maxed?'disabled':''}>
+      <div class="flow-palette-visual">${poseSvg(m.visual[1],flowFamilyLabel(m.flow.family))}</div>
+      <div><span>${esc(statusLabels[m.passportStatus])}</span><b>${esc(m.name)}</b><small>${esc(m.objective)}</small></div>
+      <em>${maxed?'FULL':isLast?'LAST':'+ ADD'}</em>
+    </button>`;
+  }).join(''):'<div class="flow-empty"><b>No unlocked movements in this family yet.</b><span>Build your Movement Passport and this palette will expand.</span></div>';
+
+  document.querySelectorAll('[data-flow-family]').forEach(b=>b.onclick=()=>{state.flowFamily=b.dataset.flowFamily;renderFlow()});
+  document.querySelectorAll('[data-flow-add]').forEach(b=>b.onclick=()=>{
+    flowPersist({...state.flow,sequence:F.add(state.flow.sequence,b.dataset.flowAdd,state.passport)});
+    renderFlow();
+  });
+
+  document.querySelectorAll('[data-rounds]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.rounds)===state.flow.rounds));
+  document.querySelectorAll('[data-rhythm]').forEach(b=>b.classList.toggle('selected',b.dataset.rhythm===state.flow.rhythm));
+
+  $('#flow-sequence').innerHTML=state.flow.sequence.length?state.flow.sequence.map((id,i)=>{
+    const m=L.get(id),s=F.status(state.passport,id);
+    return `<article class="flow-sequence-item" style="--flow:${domainColours[m.domain]||'#b8ff56'}">
+      <span class="flow-order">${String(i+1).padStart(2,'0')}</span>
+      <div class="flow-seq-visual">${poseSvg(m.visual[1])}</div>
+      <div class="flow-seq-copy"><span>${esc(statusLabels[s])}</span><b>${esc(m.name)}</b><small>${esc(flowFamilyLabel(F.META[id].family))}</small></div>
+      <div class="flow-seq-actions">
+        <button type="button" data-flow-up="${i}" ${i===0?'disabled':''} aria-label="Move ${esc(m.name)} earlier">↑</button>
+        <button type="button" data-flow-down="${i}" ${i===state.flow.sequence.length-1?'disabled':''} aria-label="Move ${esc(m.name)} later">↓</button>
+        <button type="button" data-flow-remove="${i}" aria-label="Remove ${esc(m.name)}">×</button>
+      </div>
+    </article>`;
+  }).join(''):`<div class="flow-empty sequence"><b>Your flow is empty.</b><span>Add movements from your available vocabulary, or use Starter flow.</span></div>`;
+
+  document.querySelectorAll('[data-flow-up]').forEach(b=>b.onclick=()=>{flowPersist({...state.flow,sequence:F.move(state.flow.sequence,Number(b.dataset.flowUp),-1,state.passport)});renderFlow()});
+  document.querySelectorAll('[data-flow-down]').forEach(b=>b.onclick=()=>{flowPersist({...state.flow,sequence:F.move(state.flow.sequence,Number(b.dataset.flowDown),1,state.passport)});renderFlow()});
+  document.querySelectorAll('[data-flow-remove]').forEach(b=>b.onclick=()=>{flowPersist({...state.flow,sequence:F.remove(state.flow.sequence,Number(b.dataset.flowRemove),state.passport)});renderFlow()});
+
+  const plan=F.compose(state.flow,state.passport);state.flowPlan=plan;
+  if(!plan.valid){
+    $('#flow-analysis').innerHTML='<div><span>FLOW STATUS</span><b>Add at least 2 movements</b><small>A flow needs a beginning, a destination and something between them.</small></div>';
+    $('#flow-transitions').innerHTML='';
+    $('#start-flow').disabled=true;
+  }else{
+    $('#flow-analysis').innerHTML=`
+      <div><span>ROUND</span><b>${mmss(plan.roundSeconds)}</b><small>${plan.movements.length} movements</small></div>
+      <div><span>TOTAL</span><b>${mmss(plan.totalSeconds)}</b><small>${plan.rounds} rounds</small></div>
+      <div><span>CONNECTION</span><b>${plan.analysis.label}</b><small>${plan.analysis.score}% direct continuity</small></div>
+      <div><span>RHYTHM</span><b>${esc(plan.rhythmInfo.label)}</b><small>${esc(plan.rhythmInfo.copy)}</small></div>`;
+    $('#flow-transitions').innerHTML=plan.transitions.map((t,i)=>`<article class="flow-transition quality-${t.quality}">
+      <div><span>${String(i+1).padStart(2,'0')}</span><b>${esc(flowMoveName(t.from))} → ${esc(flowMoveName(t.to))}</b><em>${esc(t.quality)}</em></div>
+      <p>${esc(t.hint)}</p>
+    </article>`).join('');
+    $('#start-flow').disabled=false;
+  }
+}
+
+$('#flow-rounds').onclick=e=>{const b=e.target.closest('[data-rounds]');if(!b)return;flowPersist({...state.flow,rounds:Number(b.dataset.rounds)});renderFlow()};
+$('#flow-rhythm').onclick=e=>{const b=e.target.closest('[data-rhythm]');if(!b)return;flowPersist({...state.flow,rhythm:b.dataset.rhythm});renderFlow()};
+$('#starter-flow').onclick=()=>{flowPersist({...state.flow,sequence:F.starter(state.passport)});renderFlow()};
+$('#clear-flow').onclick=()=>{flowPersist({...state.flow,sequence:[]});$('#flow-player').hidden=true;stopFlowTicker();state.flowRunner=null;renderFlow()};
+
+function stopFlowTicker(){if(state.flowTick){clearInterval(state.flowTick);state.flowTick=null}}
+function ensureFlowTicker(){
+  stopFlowTicker();
+  if(!state.flowRunner)return;
+  const snap=state.flowRunner.snapshot();
+  if(snap.running&&!snap.finished&&snap.remaining>0){
+    state.flowTick=setInterval(()=>{state.flowRunner.tick();renderFlowRunner()},1000);
+  }
+}
+function renderFlowRunner(){
+  const root=$('#flow-runner-card');if(!root||!state.flowRunner||!state.flowPlan)return;
+  const snap=state.flowRunner.snapshot();
+  if(snap.finished){
+    stopFlowTicker();
+    root.innerHTML=`<div class="flow-finished"><span>✓</span><p class="eyebrow">FLOW COMPLETE</p><h2>${state.flowPlan.rounds} rounds connected.</h2><p>The aim is not speed. Notice whether the transitions became quieter, clearer and more intentional across the rounds.</p><div><button type="button" id="repeat-flow">Repeat flow</button><button type="button" id="back-flow">Back to builder</button></div></div>`;
+    $('#repeat-flow').onclick=()=>startFlowPlayer();
+    $('#back-flow').onclick=()=>{$('#flow-player').hidden=true;$('#flow-view').scrollIntoView({behavior:'smooth',block:'start'})};
+    return;
+  }
+  const step=snap.current;
+  let body='';
+  if(step.type==='move'){
+    const m=L.get(step.movementId);
+    body=`<div class="flow-runner-main" style="--flow:${domainColours[m.domain]||'#b8ff56'}">
+      <div class="flow-runner-visual">${visualStrip(m)}</div>
+      <div class="flow-runner-copy"><p class="eyebrow">ROUND ${step.round} · MOVE</p><h2>${esc(m.name)}</h2><p>${esc(m.objective)}</p><div class="runner-cues"><b>Keep</b>${m.cues.slice(0,3).map(x=>`<span>${esc(x)}</span>`).join('')}</div></div>
+    </div>`;
+  }else if(step.type==='transition'){
+    const from=L.get(step.from),to=L.get(step.to);
+    body=`<div class="flow-transition-player"><p class="eyebrow">ROUND ${step.round} · TRANSITION</p><div class="transition-pair"><div>${poseSvg(from.visual[1])}<b>${esc(from.name)}</b></div><span>→</span><div>${poseSvg(to.visual[1])}<b>${esc(to.name)}</b></div></div><p>${esc(step.hint)}</p></div>`;
+  }else{
+    body=`<div class="flow-rest-player"><p class="eyebrow">ROUND ${step.round} COMPLETE</p><h2>Reset, breathe, keep the next round clean.</h2><p>Flow quality usually improves when recovery is long enough to preserve attention.</p></div>`;
+  }
+  root.innerHTML=`<div class="flow-player-shell">
+    <div class="flow-player-top"><span>${esc(state.flowPlan.rhythmInfo.label)} rhythm</span><span>${Math.min(step.round,state.flowPlan.rounds)} / ${state.flowPlan.rounds} rounds</span></div>
+    ${body}
+    <div class="flow-clock"><div><small>${step.type==='move'?'MOVE':step.type==='transition'?'CONNECT':'RECOVER'}</small><strong>${mmss(snap.remaining)}</strong></div><div class="flow-clock-actions"><button type="button" id="flow-pause">${snap.running?'Pause':'Resume'}</button><button type="button" id="flow-next">Next →</button></div></div>
+    <div class="runner-progress"><span style="width:${snap.progress}%"></span></div>
+    <div class="flow-player-foot"><span>${snap.progress}% through the flow timeline</span><button type="button" id="flow-stop">End flow</button></div>
+  </div>`;
+  $('#flow-pause').onclick=()=>{snap.running?state.flowRunner.pause():state.flowRunner.start();renderFlowRunner()};
+  $('#flow-next').onclick=()=>{state.flowRunner.next();renderFlowRunner()};
+  $('#flow-stop').onclick=()=>{state.flowRunner.pause();stopFlowTicker();$('#flow-player').hidden=true;renderFlow()};
+  ensureFlowTicker();
+}
+function startFlowPlayer(){
+  const plan=F.compose(state.flow,state.passport);if(!plan.valid)return;
+  state.flowPlan=plan;stopFlowTicker();state.flowRunner=new F.FlowRunner(plan);state.flowRunner.start();
+  $('#flow-player').hidden=false;renderFlowRunner();
+  $('#flow-player').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+}
+$('#start-flow').onclick=startFlowPlayer;
 
 function openMovement(id){
  const m=L.get(id);if(!m)return;
@@ -343,5 +481,5 @@ $('#edit-choices').onclick=()=>document.querySelector('.builder').scrollIntoView
 document.querySelectorAll('[data-view-target]').forEach(b=>b.onclick=e=>{e.preventDefault();setView(b.dataset.viewTarget)});
 $('#movement-dialog').addEventListener('click',e=>{if(e.target===$('#movement-dialog'))$('#movement-dialog').close()});
 $('#passport-dialog').addEventListener('click',e=>{if(e.target===$('#passport-dialog'))$('#passport-dialog').close()});
-renderChooser();renderLibrary();renderPassport();
+renderChooser();renderLibrary();renderPassport();renderFlow();
 })();
