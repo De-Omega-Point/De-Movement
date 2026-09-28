@@ -113,6 +113,78 @@ const MOVEMENTS=[
  cues:['Sit into one hip','Keep the working foot grounded','Own the bottom position before rising'],
  mistakes:['Collapsing the knee inward','Dropping deeper than you can control'],
  reference:null
+},
+{
+ id:'wrist-rocks',name:'Wrist Rocks',domain:'mobility',intent:'mobility',level:'Foundation',
+ objective:'Prepare the wrists for loaded hand support while keeping pressure gradual and controlled.',
+ dose:'2 × 8–10 slow reps',visual:['quadruped','wristRock','wristRockDeep'],
+ regression:'Hands Elevated Wrist Shift',next:'Long-Lever Wrist Rock',
+ cues:['Spread the fingers','Shift gradually','Keep the heel of the hand connected'],
+ mistakes:['Bouncing into range','Forcing sharp wrist discomfort'],
+ reference:null
+},
+{
+ id:'scapular-push-up',name:'Scapular Push-Up',domain:'calisthenics',intent:'strength',level:'Foundation',
+ objective:'Build shoulder-blade control for handstands, planche work, crawling and pushing strength.',
+ dose:'2–3 × 8–12 reps',visual:['plank','scapSoft','scapPush'],
+ regression:'Incline Scapular Push-Up',next:'Planche-Lean Scapular Push-Up',
+ cues:['Keep elbows straight','Let shoulder blades move around the ribs','Push the floor away at the top'],
+ mistakes:['Turning it into an elbow push-up','Dropping the hips'],
+ reference:null
+},
+{
+ id:'active-hang',name:'Active Hang',domain:'calisthenics',intent:'strength',level:'Foundation',
+ objective:'Prepare vertical pulling by connecting grip, shoulder depression and trunk control.',
+ dose:'2–3 × 15–30 sec',visual:['hang','activeHang','activeHangTall'],
+ regression:'Foot-Assisted Active Hang',next:'Scapular Pull-Up',
+ cues:['Keep elbows long','Draw shoulders away from ears','Stay tall through the trunk'],
+ mistakes:['Shrugging passively','Holding through elbow bend'],
+ reference:null
+},
+{
+ id:'hollow-body',name:'Hollow Body Hold',domain:'calisthenics',intent:'compression',level:'Foundation',
+ objective:'Build trunk tension and rib-to-pelvis control for handstands, levers and acrobatic shapes.',
+ dose:'3 × 15–30 sec',visual:['hollowPrep','hollow','hollowLong'],
+ regression:'Tuck Hollow Hold',next:'Long-Lever Hollow Hold',
+ cues:['Press lower back gently towards the floor','Reach long through arms and legs','Breathe behind the tension'],
+ mistakes:['Arching the lower back','Holding breath until form collapses'],
+ reference:null
+},
+{
+ id:'pike-compression-lift',name:'Pike Compression Lift',domain:'calisthenics',intent:'compression',level:'Foundation',
+ objective:'Build active hip flexion and compression strength for L-sits, presses and pike control.',
+ dose:'3 × 6–10 reps',visual:['pikeSit','pikeLift','pikeLiftHigh'],
+ regression:'Single-Leg Pike Lift',next:'Elevated Pike Compression Lift',
+ cues:['Sit tall before lifting','Drive the lift from the hips','Keep the knee straight only as far as controlled'],
+ mistakes:['Leaning far backwards','Using momentum to bounce the legs'],
+ reference:null
+},
+{
+ id:'ninety-ninety-switch',name:'90/90 Hip Switch',domain:'mobility',intent:'mobility',level:'Foundation',
+ objective:'Build active hip rotation and smooth ground transitions between internal and external rotation.',
+ dose:'2–3 × 5–8 / side',visual:['ninetySit','ninetySwitch','ninetyOpen'],
+ regression:'Supported 90/90 Switch',next:'Hands-Free 90/90 Transition',
+ cues:['Move from the hips','Keep the transition slow','Use the hands only as much as needed'],
+ mistakes:['Twisting aggressively through the knees','Falling between positions'],
+ reference:null
+},
+{
+ id:'split-squat',name:'Split Squat',domain:'calisthenics',intent:'strength',level:'Foundation',
+ objective:'Build unilateral leg strength, hip control and useful lower-body range.',
+ dose:'3 × 6–10 / side',visual:['lunge','splitMid','splitDeep'],
+ regression:'Supported Split Squat',next:'Rear-Foot Elevated Split Squat',
+ cues:['Keep the front foot planted','Lower under control','Drive through the whole front foot'],
+ mistakes:['Front knee collapsing inward','Dropping faster than you can control'],
+ reference:null
+},
+{
+ id:'deep-squat-pry',name:'Deep Squat Pry',domain:'mobility',intent:'mobility',level:'Foundation',
+ objective:'Explore ankle and hip range while maintaining a relaxed, controllable squat position.',
+ dose:'2 × 30–45 sec',visual:['wideStand','squat','squatReach'],
+ regression:'Supported Deep Squat',next:'Hands-Free Squat Flow',
+ cues:['Use support if needed','Keep breathing easy','Shift gently rather than forcing depth'],
+ mistakes:['Forcing heels down','Turning mobility into a pain tolerance test'],
+ reference:null
 }
 ];
 
