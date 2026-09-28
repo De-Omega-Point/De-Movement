@@ -17,12 +17,13 @@
     <nav class="view-nav" aria-label="Product views">
       <button type="button" class="active" data-view-target="choose">Choose</button>
       <button type="button" data-view-target="training">Today</button>
+      <button type="button" data-view-target="assistant">Assistant</button>
       <button type="button" data-view-target="library">Movement Library</button>
       <button type="button" data-view-target="passport">Movement Passport</button>
       <button type="button" data-view-target="flow">Flow Lab</button>
     </nav>
     <a class="account-link" id="cloud-account-link" href="account.html">Guest · Account</a>
-    <span class="phase-chip">PHASE 7 · COACHING PLATFORM</span>
+    <span class="phase-chip">PHASE 8 · INTELLIGENCE</span>
   </header>
 
   <main class="page">
@@ -147,6 +148,32 @@
       </section>
     </section>
 
+    <section id="assistant-view" class="assistant-view" hidden>
+      <header class="assistant-hero">
+        <div>
+          <p class="eyebrow">DE-MOVEMENT ASSISTANT</p>
+          <h1>Ask the evidence.</h1>
+          <p class="lead">The Assistant explains your recommendation, Passport and next movement options from your own De-Movement data. It does not auto-progress skills or make medical decisions.</p>
+        </div>
+        <div class="assistant-principle"><b>Evidence-bound</b><span>Every answer is generated from your profile, readiness, history, Passport and current session. No invisible scoring, no automatic action.</span></div>
+      </header>
+
+      <section class="assistant-shell">
+        <div class="assistant-prompts">
+          <button type="button" data-assistant-question="Why this session?">Why this session?</button>
+          <button type="button" data-assistant-question="What should I work on next?">What should I work on next?</button>
+          <button type="button" data-assistant-question="Give me an easier option.">Give me an easier option</button>
+          <button type="button" data-assistant-question="Explain my Handstand pathway.">Explain Handstand</button>
+          <button type="button" data-assistant-question="Show my Passport progress.">Passport progress</button>
+        </div>
+        <form id="assistant-form" class="assistant-form">
+          <label for="assistant-question">Ask De-Movement</label>
+          <div><input id="assistant-question" maxlength="220" autocomplete="off" placeholder="Why is this being recommended today?"><button type="submit">Ask →</button></div>
+        </form>
+        <div id="assistant-answer" class="assistant-answer"></div>
+      </section>
+    </section>
+
     <section id="library-view" class="library-view" hidden>
       <header class="library-hero">
         <p class="eyebrow">MOVEMENT LIBRARY</p>
@@ -227,6 +254,7 @@
   <script src="flow.js"></script>
   <script src="training-data.js"></script>
   <script src="training-intelligence.js"></script>
+  <script src="assistant-engine.js"></script>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-adapter.js"></script>
