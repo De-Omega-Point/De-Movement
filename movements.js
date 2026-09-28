@@ -185,6 +185,15 @@ const MOVEMENTS=[
  cues:['Use support if needed','Keep breathing easy','Shift gently rather than forcing depth'],
  mistakes:['Forcing heels down','Turning mobility into a pain tolerance test'],
  reference:null
+},
+{
+ id:'rock-to-squat',name:'Rock to Squat',domain:'acrobatics',intent:'acrobatics',level:'Foundation',
+ objective:'Build floor confidence by using a rounded rocking action to return to a balanced squat.',
+ dose:'3 × 5 controlled reps',visual:['rock','rockBack','squat'],
+ regression:'Rock with Hand Support',next:'Forward Roll',
+ cues:['Keep the back rounded','Bring the feet under you before standing','Finish balanced before repeating'],
+ mistakes:['Driving through the neck or head','Throwing forward faster than you can control'],
+ reference:null
 }
 ];
 
