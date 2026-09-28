@@ -17,8 +17,9 @@
     <nav class="view-nav" aria-label="Product views">
       <button type="button" class="active" data-view-target="choose">Choose</button>
       <button type="button" data-view-target="library">Movement Library</button>
+      <button type="button" data-view-target="passport">Movement Passport</button>
     </nav>
-    <span class="phase-chip">PHASE 3 · SESSION COMPOSER</span>
+    <span class="phase-chip">PHASE 4 · MOVEMENT PASSPORT</span>
   </header>
 
   <main class="page">
@@ -105,10 +106,26 @@
       <div id="domain-filters" class="filter-row"></div>
       <div id="movement-grid" class="movement-grid"></div>
     </section>
+
+    <section id="passport-view" class="passport-view" hidden>
+      <header class="passport-hero">
+        <div>
+          <p class="eyebrow">MOVEMENT PASSPORT</p>
+          <h1>Track what your body can actually do.</h1>
+          <p class="lead">Your Passport maps capability across calisthenics, locomotion, soft acrobatics and usable range. Nothing unlocks itself. You choose when a skill is practising, ready or mastered.</p>
+        </div>
+        <div class="passport-note"><b>Human-controlled progression</b><span>Readiness criteria guide the decision. They do not replace coaching judgement or medical clearance.</span></div>
+      </header>
+      <div id="passport-summary" class="passport-summary"></div>
+      <div id="passport-paths" class="passport-paths"></div>
+    </section>
   </main>
 
   <dialog id="movement-dialog" class="movement-dialog" aria-label="Movement detail">
     <div id="movement-dialog-content"></div>
+  </dialog>
+  <dialog id="passport-dialog" class="movement-dialog passport-dialog" aria-label="Movement Passport node">
+    <div id="passport-dialog-content"></div>
   </dialog>
 
   <footer>
@@ -120,6 +137,8 @@
   <script src="movements.js"></script>
   <script src="composer.js"></script>
   <script src="runner.js"></script>
+  <script src="paths.js"></script>
+  <script src="passport.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
