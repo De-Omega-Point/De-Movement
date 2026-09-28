@@ -1,6 +1,7 @@
 window.DEMOVEMENT_CONFIG={
-  supabaseUrl:'',
-  supabaseAnonKey:''
+  supabaseUrl:'https://pbqxkcigkiaougkqcolq.supabase.co',
+  supabaseAnonKey:'sb_publishable_a7YcjP_MPEuhPrhdPrrmxQ_iiiSJE__'
 };
 // Public browser configuration only.
-// Never place a Supabase service-role key or other privileged secret in this file.
+// This publishable key is intended for client-side use with Row Level Security.
+// Never place a Supabase service-role key or privileged secret in this file.
