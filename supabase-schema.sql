@@ -238,7 +238,14 @@ create policy training_logs_access on public.training_logs for select using ((mo
 drop policy if exists training_logs_insert_self on public.training_logs;
 create policy training_logs_insert_self on public.training_logs for insert with check (mover_id=auth.uid() and public.dm_account_active());
 drop policy if exists saved_flows_owner on public.saved_flows;
-create policy saved_flows_owner on public.saved_flows for all using ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id)) with check ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
+drop policy if exists saved_flows_read on public.saved_flows;
+drop policy if exists saved_flows_insert on public.saved_flows;
+drop policy if exists saved_flows_update on public.saved_flows;
+drop policy if exists saved_flows_delete on public.saved_flows;
+create policy saved_flows_read on public.saved_flows for select using ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin() or public.dm_is_active_coach_for(mover_id));
+create policy saved_flows_insert on public.saved_flows for insert with check ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
+create policy saved_flows_update on public.saved_flows for update using ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin()) with check ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
+create policy saved_flows_delete on public.saved_flows for delete using ((mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
 
 drop policy if exists coach_movers_access on public.coach_movers;
 create policy coach_movers_access on public.coach_movers for select using ((coach_id=auth.uid() and public.dm_account_active()) or (mover_id=auth.uid() and public.dm_account_active()) or public.dm_is_admin());
