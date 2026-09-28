@@ -18,8 +18,9 @@
       <button type="button" class="active" data-view-target="choose">Choose</button>
       <button type="button" data-view-target="library">Movement Library</button>
       <button type="button" data-view-target="passport">Movement Passport</button>
+      <button type="button" data-view-target="flow">Flow Lab</button>
     </nav>
-    <span class="phase-chip">PHASE 4 · MOVEMENT PASSPORT</span>
+    <span class="phase-chip">PHASE 5 · FLOW LAB</span>
   </header>
 
   <main class="page">
@@ -119,6 +120,41 @@
       <div id="passport-summary" class="passport-summary"></div>
       <div id="passport-paths" class="passport-paths"></div>
     </section>
+
+    <section id="flow-view" class="flow-view" hidden>
+      <header class="flow-hero">
+        <div>
+          <p class="eyebrow">FLOW LAB</p>
+          <h1>Connect what you can do.</h1>
+          <p class="lead">Build a sequence from your available movement vocabulary. De-Movement coaches the transitions as carefully as the movements themselves.</p>
+        </div>
+        <div class="flow-principle"><b>Passport-aware</b><span>Locked skills do not appear in the Flow palette. As capability expands, the laboratory expands with it.</span></div>
+      </header>
+
+      <div class="flow-layout">
+        <section class="flow-palette-panel">
+          <div class="flow-panel-head"><div><p class="eyebrow">YOUR VOCABULARY</p><h2>Available movements</h2></div><span id="flow-eligible-count"></span></div>
+          <div id="flow-family-filters" class="filter-row"></div>
+          <div id="flow-palette" class="flow-palette"></div>
+        </section>
+
+        <section class="flow-builder-panel">
+          <div class="flow-panel-head"><div><p class="eyebrow">SEQUENCE</p><h2>Build your flow</h2></div><div class="flow-head-actions"><button type="button" id="starter-flow">Starter flow</button><button type="button" id="clear-flow">Clear</button></div></div>
+          <div class="flow-settings">
+            <fieldset><legend>Rounds</legend><div id="flow-rounds" class="segmented"><button type="button" data-rounds="2">2</button><button type="button" data-rounds="3" class="selected">3</button><button type="button" data-rounds="4">4</button></div></fieldset>
+            <fieldset><legend>Rhythm</legend><div id="flow-rhythm" class="segmented"><button type="button" data-rhythm="learn">Learn</button><button type="button" data-rhythm="smooth" class="selected">Smooth</button><button type="button" data-rhythm="express">Express</button></div></fieldset>
+          </div>
+          <div id="flow-sequence" class="flow-sequence"></div>
+          <div id="flow-analysis" class="flow-analysis"></div>
+          <div id="flow-transitions" class="flow-transitions"></div>
+          <button type="button" id="start-flow" class="flow-start">Start guided flow →</button>
+        </section>
+      </div>
+
+      <section id="flow-player" class="flow-player" hidden>
+        <div id="flow-runner-card"></div>
+      </section>
+    </section>
   </main>
 
   <dialog id="movement-dialog" class="movement-dialog" aria-label="Movement detail">
@@ -139,6 +175,7 @@
   <script src="runner.js"></script>
   <script src="paths.js"></script>
   <script src="passport.js"></script>
+  <script src="flow.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
