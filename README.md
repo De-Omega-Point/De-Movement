@@ -46,7 +46,7 @@ Phase 1 is ready to advance when a user can:
 
 ## Status
 
-**Phase 7 — Accounts + Coaching Platform built; live Supabase activation pending**
+**Phase 7 — Accounts + Coaching Platform complete and live-verified**
 
 
 ## Current product capabilities
@@ -88,4 +88,4 @@ Built:
 - Administrator role, suspension and relationship controls
 - RLS and server-checked RPC security model
 
-Phase 7 code verification is complete. Live multi-account acceptance testing requires a connected Supabase project. See `CLOUD-SETUP.md`.
+Phase 7 is connected to the live D-Move Supabase backend and has passed the live role/security acceptance suite: 28/28 full matrix tests plus 6/6 post-optimisation smoke tests. See `supabase/tests/PHASE-7-ACCEPTANCE.md`.
