@@ -1,0 +1,7 @@
+{
+  "name":"de-movement",
+  "version":"0.1.0",
+  "private":true,
+  "description":"Choose how you move — De-Omega-Point movement training prototype",
+  "scripts":{"test":"node tests/phase1.test.cjs"}
+}
