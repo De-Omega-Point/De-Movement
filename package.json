@@ -1,9 +1,9 @@
 {
   "name": "de-movement",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Choose how you move — De-Omega-Point movement training prototype",
   "scripts": {
-    "test": "node --check app.js && node --check paths.js && node --check passport.js && node --check flow.js && node tests/phase1.test.cjs && node tests/library.test.cjs && node tests/composer.test.cjs && node tests/passport.test.cjs && node tests/flow.test.cjs"
+    "test": "node --check app.js && node --check paths.js && node --check passport.js && node --check flow.js && node --check training-data.js && node --check training-intelligence.js && node tests/phase1.test.cjs && node tests/library.test.cjs && node tests/composer.test.cjs && node tests/passport.test.cjs && node tests/flow.test.cjs && node tests/personalisation.test.cjs"
   }
 }
