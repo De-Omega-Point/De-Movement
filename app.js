@@ -6,10 +6,14 @@ const R=window.DeMovementRunner;
 const P=window.DeMovementPaths;
 const PP=window.DeMovementPassport;
 const F=window.DeMovementFlow;
-if(!E||!L||!C||!R||!P||!PP||!F)throw new Error('De-Movement modules failed to load.');
+const D=window.DeMovementTrainingData;
+const I=window.DeMovementIntelligence;
+if(!E||!L||!C||!R||!P||!PP||!F||!D||!I)throw new Error('De-Movement modules failed to load.');
 
 const initialPassport=PP.load();
-const state={primary:'control',blend:'none',duration:40,energy:'steady',view:'choose',domain:'all',plan:null,runner:null,tick:null,passport:initialPassport,flow:F.load(initialPassport),flowFamily:'all',flowPlan:null,flowRunner:null,flowTick:null};
+const initialProfile=D.loadProfile();
+const initialReadiness=D.loadReadiness();
+const state={primary:'control',blend:'none',duration:40,energy:'steady',view:'choose',domain:'all',plan:null,runner:null,tick:null,passport:initialPassport,flow:F.load(initialPassport),flowFamily:'all',flowPlan:null,flowRunner:null,flowTick:null,profile:initialProfile,readiness:initialReadiness,history:D.loadHistory(),sessionSaved:false,flowSaved:false};
 const $=s=>document.querySelector(s);
 const colors={lime:'#b8ff56',coral:'#ff7a66',violet:'#b39cff',aqua:'#70e6d2',gold:'#ffd26f',blue:'#77aefc'};
 const domainColours={calisthenics:'#b8ff56',locomotion:'#70e6d2',acrobatics:'#ffd26f',mobility:'#77aefc'};
@@ -88,14 +92,16 @@ function visualStrip(m){
 }
 
 function setView(view){
- const next=['library','passport','flow'].includes(view)?view:'choose';
+ const next=['training','library','passport','flow'].includes(view)?view:'choose';
  if(state.view==='flow'&&next!=='flow'&&state.flowRunner){state.flowRunner.pause();stopFlowTicker()}
  state.view=next;
  $('#choose-view').hidden=state.view!=='choose';
+ $('#training-view').hidden=state.view!=='training';
  $('#library-view').hidden=state.view!=='library';
  $('#passport-view').hidden=state.view!=='passport';
  $('#flow-view').hidden=state.view!=='flow';
  document.querySelectorAll('[data-view-target]').forEach(b=>b.classList.toggle('active',b.dataset.viewTarget===state.view));
+ if(state.view==='training')renderTraining();
  if(state.view==='library')renderLibrary();
  if(state.view==='passport')renderPassport();
  if(state.view==='flow')renderFlow();
@@ -129,6 +135,83 @@ function renderChooser(){
  document.querySelectorAll('[data-primary]').forEach(b=>b.onclick=()=>{state.primary=b.dataset.primary;if(state.blend===state.primary)state.blend='none';renderChooser()});
  document.querySelectorAll('[data-blend]').forEach(b=>b.onclick=()=>{if(!b.disabled){state.blend=b.dataset.blend;renderChooser()}});
 }
+
+
+const goalLabels={handstand:'Handstand',planche:'Planche','front-lever':'Front Lever',compression:'Compression',locomotion:'Ground Locomotion','soft-acrobatics':'Soft Acrobatics',mobility:'Mobility'};
+const styleLabels={calisthenics:'Calisthenics',locomotion:'Locomotion',acrobatics:'Soft Acrobatics',mobility:'Mobility'};
+const primaryLabels={control:'Control',strength:'Strength',compression:'Compression',locomotion:'Move',acrobatics:'Acrobatics',mobility:'Range'};
+
+function ratingSelect(id,min,max,value){
+ return `<select id="${id}">${Array.from({length:max-min+1},(_,i)=>i+min).map(n=>`<option value="${n}" ${n===value?'selected':''}>${n}</option>`).join('')}</select>`;
+}
+function movementDomains(ids){
+ return [...new Set((ids||[]).map(id=>L.get(id)?.domain).filter(Boolean))];
+}
+function exposureWidth(value,max){
+ return Math.round((Math.max(0,value)/Math.max(1,max))*100);
+}
+function renderTraining(){
+ state.profile=D.normaliseProfile(state.profile);
+ state.readiness=D.normaliseReadiness(state.readiness);
+ const rec=I.recommendation({profile:state.profile,readiness:state.readiness,history:state.history});
+ const week=I.weekly(state.history);
+ const maxExp=Math.max(1,...Object.values(week.exposure));
+
+ $('#goal-choices').innerHTML=D.GOALS.map(g=>`<button type="button" data-goal="${g}" class="${state.profile.goalPaths.includes(g)?'selected':''}">${esc(goalLabels[g])}</button>`).join('');
+ $('#style-choices').innerHTML=D.STYLES.map(s=>`<button type="button" data-style="${s}" class="${state.profile.preferredStyles.includes(s)?'selected':''}">${esc(styleLabels[s])}</button>`).join('');
+ $('#profile-days').value=String(state.profile.daysPerWeek);
+ $('#profile-minutes').value=String(state.profile.sessionMinutes);
+
+ const readinessItems=[
+  ['energy','Energy','Low','High'],
+  ['soreness','Soreness','Low','High'],
+  ['focus','Focus','Low','High']
+ ];
+ $('#readiness-controls').innerHTML=readinessItems.map(([key,label,left,right])=>`<fieldset><legend>${label}</legend><div class="readiness-scale"><small>${left}</small><div>${[1,2,3,4,5].map(n=>`<button type="button" data-readiness="${key}" data-value="${n}" class="${state.readiness[key]===n?'selected':''}">${n}</button>`).join('')}</div><small>${right}</small></div></fieldset>`).join('');
+ $('#readiness-review').checked=state.readiness.review;
+ $('#readiness-note').value=state.readiness.note||'';
+ $('#readiness-time').textContent=state.readiness.checkedAt?'Last saved '+new Date(state.readiness.checkedAt).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'Not checked yet';
+
+ const recPanel=$('#recommendation-panel');
+ if(rec.mode==='review'){
+  recPanel.className='recommendation-panel review';
+  recPanel.innerHTML=`<div><p class="eyebrow">TODAY’S RECOMMENDATION</p><h2>${esc(rec.headline)}</h2><p>De-Movement is deliberately withholding an automatic training prescription from this signal.</p></div><ul>${rec.reasons.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button type="button" data-view-target="choose" class="recommend-secondary">Choose manually</button>`;
+ }else{
+  recPanel.className='recommendation-panel';
+  recPanel.innerHTML=`<div class="recommend-main"><p class="eyebrow">TODAY’S RECOMMENDATION</p><h2>${esc(rec.headline)}</h2><p><b>${rec.duration} min · ${esc(E.ENERGY[rec.energy].label)} energy</b></p><ul>${rec.reasons.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><button type="button" id="apply-recommendation" class="recommend-apply">Use this session →</button>`;
+  $('#apply-recommendation').onclick=()=>{state.primary=rec.primary;state.blend=rec.blend;state.duration=rec.duration;state.energy=rec.energy;renderChooser();setView('choose')};
+ }
+
+ $('#exposure-bars').innerHTML=Object.entries(week.exposure).map(([key,value])=>`<div class="exposure-row"><span>${esc(primaryLabels[key])}</span><div><i style="width:${exposureWidth(value,maxExp)}%"></i></div><b>${Number(value).toFixed(value%1?1:0)}</b></div>`).join('')+`<div class="week-stats"><span><b>${week.sessions}</b> sessions</span><span><b>${week.minutes}</b> min</span><span><b>${week.effort||'–'}</b> effort</span><span><b>${week.control||'–'}</b> control</span></div>`;
+
+ $('#training-history').innerHTML=state.history.length?state.history.slice(0,12).map(x=>`<article><div><span>${esc(x.kind==='flow'?'FLOW':'SESSION')}</span><b>${esc(x.title)}</b><small>${new Date(x.completedAt).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} · ${x.durationMinutes} min</small></div><div class="history-ratings"><span>E ${x.effort}</span><span>C ${x.control}</span><span>↗ ${x.confidence}</span></div></article>`).join(''):'<div class="training-empty"><b>No completed training logged yet.</b><span>Finish a guided session or Flow Lab sequence and save the reflection.</span></div>';
+
+ document.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{
+   const set=new Set(state.profile.goalPaths),g=b.dataset.goal;
+   if(set.has(g))set.delete(g);else if(set.size<3)set.add(g);
+   state.profile={...state.profile,goalPaths:[...set]};renderTraining();
+ });
+ document.querySelectorAll('[data-style]').forEach(b=>b.onclick=()=>{
+   const set=new Set(state.profile.preferredStyles),s=b.dataset.style;
+   if(set.has(s))set.delete(s);else if(set.size<3)set.add(s);
+   state.profile={...state.profile,preferredStyles:[...set]};renderTraining();
+ });
+ document.querySelectorAll('[data-readiness]').forEach(b=>b.onclick=()=>{state.readiness={...state.readiness,[b.dataset.readiness]:Number(b.dataset.value)};renderTraining()});
+ document.querySelectorAll('#recommendation-panel [data-view-target]').forEach(b=>b.onclick=()=>setView(b.dataset.viewTarget));
+}
+
+$('#save-profile').onclick=()=>{
+ state.profile=D.saveProfile({...state.profile,daysPerWeek:Number($('#profile-days').value),sessionMinutes:Number($('#profile-minutes').value)});
+ renderTraining();
+};
+$('#save-readiness').onclick=()=>{
+ state.readiness=D.saveReadiness({...state.readiness,review:$('#readiness-review').checked,note:$('#readiness-note').value});
+ renderTraining();
+};
+$('#clear-history').onclick=()=>{
+ if(!confirm('Clear your local De-Movement training history on this device?'))return;
+ state.history=D.clearHistory();renderTraining();
+};
 
 function renderLibrary(){
  $('#domain-filters').innerHTML=Object.entries(L.DOMAINS).map(([key,d])=>`<button type="button" data-domain="${key}" class="${state.domain===key?'selected':''}">${esc(d.label)}</button>`).join('');
@@ -328,7 +411,13 @@ function renderFlowRunner(){
   const snap=state.flowRunner.snapshot();
   if(snap.finished){
     stopFlowTicker();
-    root.innerHTML=`<div class="flow-finished"><span>✓</span><p class="eyebrow">FLOW COMPLETE</p><h2>${state.flowPlan.rounds} rounds connected.</h2><p>The aim is not speed. Notice whether the transitions became quieter, clearer and more intentional across the rounds.</p><div><button type="button" id="repeat-flow">Repeat flow</button><button type="button" id="back-flow">Back to builder</button></div></div>`;
+    root.innerHTML=`<div class="flow-finished"><span>✓</span><p class="eyebrow">FLOW COMPLETE</p><h2>${state.flowPlan.rounds} rounds connected.</h2><p>The aim is not speed. Log whether the transitions became quieter, clearer and more intentional across the rounds.</p><div class="completion-ratings"><label>Effort / 10${ratingSelect('flow-effort',1,10,5)}</label><label>Control / 5${ratingSelect('flow-control',1,5,3)}</label><label>Confidence / 5${ratingSelect('flow-confidence',1,5,3)}</label></div><div class="completion-actions"><button type="button" class="training-save" id="save-flow-result" ${state.flowSaved?'disabled':''}>${state.flowSaved?'Saved to history':'Save reflection'}</button><button type="button" id="repeat-flow">Repeat flow</button><button type="button" id="back-flow">Back to builder</button></div></div>`;
+    $('#save-flow-result').onclick=()=>{
+      if(state.flowSaved)return;
+      const ids=state.flowPlan.movements.map(x=>x.id);
+      const item=D.persistLog({kind:'flow',title:'Flow · '+state.flowPlan.analysis.label,primary:'locomotion',blend:'mobility',energy:state.flowPlan.rhythm==='express'?'charged':state.flowPlan.rhythm==='learn'?'gentle':'steady',durationMinutes:Math.max(1,Math.round(state.flowPlan.totalSeconds/60)),effort:Number($('#flow-effort').value),control:Number($('#flow-control').value),confidence:Number($('#flow-confidence').value),movements:ids,domains:movementDomains(ids)});
+      state.history=D.normaliseHistory([item,...state.history]);state.flowSaved=true;renderFlowRunner();
+    };
     $('#repeat-flow').onclick=()=>startFlowPlayer();
     $('#back-flow').onclick=()=>{$('#flow-player').hidden=true;$('#flow-view').scrollIntoView({behavior:'smooth',block:'start'})};
     return;
@@ -361,7 +450,7 @@ function renderFlowRunner(){
 }
 function startFlowPlayer(){
   const plan=F.compose(state.flow,state.passport);if(!plan.valid)return;
-  state.flowPlan=plan;stopFlowTicker();state.flowRunner=new F.FlowRunner(plan);state.flowRunner.start();
+  state.flowPlan=plan;stopFlowTicker();state.flowSaved=false;state.flowRunner=new F.FlowRunner(plan);state.flowRunner.start();
   $('#flow-player').hidden=false;renderFlowRunner();
   $('#flow-player').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
 }
@@ -437,7 +526,13 @@ function renderRunner(){
  const snap=state.runner.snapshot();
  if(snap.finished){
    stopTicker();
-   root.innerHTML=`<div class="runner-finished"><span class="runner-check">✓</span><p class="eyebrow">SESSION COMPLETE</p><h2>${esc(state.plan.title)}</h2><p>You completed ${snap.completedSets} planned sets. Before you leave, note your effort, control and confidence.</p><div class="reflection-row">${state.plan.reflection.map(x=>`<span>${esc(x)}</span>`).join('')}</div><button type="button" class="ghost" id="close-runner">Return to session map</button></div>`;
+   root.innerHTML=`<div class="runner-finished"><span class="runner-check">✓</span><p class="eyebrow">SESSION COMPLETE</p><h2>${esc(state.plan.title)}</h2><p>You completed ${snap.completedSets} planned sets. Log how the session actually felt so tomorrow’s recommendation has evidence.</p><div class="completion-ratings"><label>Effort / 10${ratingSelect('session-effort',1,10,6)}</label><label>Control / 5${ratingSelect('session-control',1,5,3)}</label><label>Confidence / 5${ratingSelect('session-confidence',1,5,3)}</label></div><div class="completion-actions"><button type="button" class="training-save" id="save-session-result" ${state.sessionSaved?'disabled':''}>${state.sessionSaved?'Saved to history':'Save reflection'}</button><button type="button" class="ghost" id="close-runner">Return to session map</button></div></div>`;
+   $('#save-session-result').onclick=()=>{
+     if(state.sessionSaved)return;
+     const ids=state.plan.movements.map(x=>x.id);
+     const item=D.persistLog({kind:'session',title:state.plan.title,primary:state.plan.primary,blend:state.plan.blend,energy:state.plan.energy,durationMinutes:state.plan.duration,effort:Number($('#session-effort').value),control:Number($('#session-control').value),confidence:Number($('#session-confidence').value),movements:ids,domains:movementDomains(ids)});
+     state.history=D.normaliseHistory([item,...state.history]);state.sessionSaved=true;renderRunner();
+   };
    $('#close-runner').onclick=()=>{$('#guided-session').hidden=true;$('#session-plan').scrollIntoView({behavior:'smooth'})};
    return;
  }
@@ -473,7 +568,7 @@ function renderRunner(){
 }
 $('#start-guided').onclick=()=>{
  if(!state.plan){state.plan=C.compose(state);renderPlan(state.plan)}
- stopTicker();state.runner=new R.Runner(state.plan);
+ stopTicker();state.sessionSaved=false;state.runner=new R.Runner(state.plan);
  $('#guided-session').hidden=false;renderRunner();
  $('#guided-session').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
 };
@@ -481,5 +576,5 @@ $('#edit-choices').onclick=()=>document.querySelector('.builder').scrollIntoView
 document.querySelectorAll('[data-view-target]').forEach(b=>b.onclick=e=>{e.preventDefault();setView(b.dataset.viewTarget)});
 $('#movement-dialog').addEventListener('click',e=>{if(e.target===$('#movement-dialog'))$('#movement-dialog').close()});
 $('#passport-dialog').addEventListener('click',e=>{if(e.target===$('#passport-dialog'))$('#passport-dialog').close()});
-renderChooser();renderLibrary();renderPassport();renderFlow();
+renderChooser();renderTraining();renderLibrary();renderPassport();renderFlow();
 })();
