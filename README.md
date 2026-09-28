@@ -89,3 +89,21 @@ Built:
 - RLS and server-checked RPC security model
 
 Phase 7 is connected to the live D-Move Supabase backend and has passed the live role/security acceptance suite: 28/28 full matrix tests plus 6/6 post-optimisation smoke tests. See `supabase/tests/PHASE-7-ACCEPTANCE.md`.
+
+
+## Phase 8 — Intelligence + Coach Assistant
+
+Built:
+
+- evidence-bound Mover Assistant
+- Coach Attention Queue
+- explainable attention signals
+- week-over-week change summaries
+- Passport-aware next-capability guidance
+- easier-variation guidance
+- Coach session proposals
+- explicit human approval before any session proposal is applied or assigned
+
+The Phase 8 intelligence engine is deterministic and auditable. A future generative language layer may improve phrasing, but it will sit behind the evidence engine and will not receive direct authority to progress skills or assign training.
+
+See `PHASE-8-INTELLIGENCE.md`.
