@@ -97,6 +97,15 @@ async function coachRelationships(){
  const rels=data||[];
  return Promise.all(rels.map(async rel=>({...rel,mover:await profileById(rel.mover_id)})));
 }
+async function coachRosterEvidence(){
+ const rels=await coachRelationships();
+ const active=rels.filter(x=>x.status==='active'&&x.mover?.account_status==='active');
+ return Promise.all(active.map(async rel=>{
+  const detail=await coachMoverData(rel.mover_id);
+  return {moverId:rel.mover_id,name:rel.mover?.display_name||'Mover',profile:detail.profile,state:detail.state,relationship:rel};
+ }));
+}
+
 async function profileById(id){
  const {data,error}=await client.from('profiles').select('id,email,display_name,role,account_status').eq('id',id).maybeSingle();fail(error);return data||null;
 }
@@ -149,5 +158,5 @@ async function administratorTransferMover(relationshipId,coachId){
  const {data,error}=await client.rpc('dm_admin_transfer_mover',{relationship:relationshipId,new_coach:coachId});fail(error);return data;
 }
 
-return {mode,client,session,user,me,signIn,signOut,routeForRole,updateDisplayName,loadMoverState,saveTrainingProfile,savePassport,saveReadiness,saveTrainingLog,saveFlow,myAssignments,updateAssignment,profileById,coachRelationships,coachMoverData,createCoachInvite,claimCoachInvite,saveCoachNote,createAssignment,administratorProfiles,administratorRelationships,administratorSetRole,administratorSetAccountStatus,administratorTransferMover};
+return {mode,client,session,user,me,signIn,signOut,routeForRole,updateDisplayName,loadMoverState,saveTrainingProfile,savePassport,saveReadiness,saveTrainingLog,saveFlow,myAssignments,updateAssignment,profileById,coachRelationships,coachMoverData,coachRosterEvidence,createCoachInvite,claimCoachInvite,saveCoachNote,createAssignment,administratorProfiles,administratorRelationships,administratorSetRole,administratorSetAccountStatus,administratorTransferMover};
 });
