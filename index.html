@@ -10,94 +10,102 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#" aria-label="De-Movement home">
+    <a class="brand" href="#" data-view-target="choose" aria-label="De-Movement home">
       <span class="brand-dot"></span>
       <span><b>DE-MOVEMENT</b><small>A De-Omega-Point movement system</small></span>
     </a>
-    <span class="phase-chip">PHASE 1 · CHOICE ENGINE</span>
+    <nav class="view-nav" aria-label="Product views">
+      <button type="button" class="active" data-view-target="choose">Choose</button>
+      <button type="button" data-view-target="library">Movement Library</button>
+    </nav>
+    <span class="phase-chip">PHASE 2 · VISUAL LIBRARY</span>
   </header>
 
   <main class="page">
-    <section class="intro">
-      <p class="eyebrow">CHOOSE HOW YOU MOVE</p>
-      <h1>Your training starts with an intention, not an exercise list.</h1>
-      <p class="lead">Pick the movement quality you want today. Then choose whether to keep it pure or blend in another movement language.</p>
-    </section>
+    <div id="choose-view">
+      <section class="intro">
+        <p class="eyebrow">CHOOSE HOW YOU MOVE</p>
+        <h1>Your training starts with an intention, not an exercise list.</h1>
+        <p class="lead">Pick the movement quality you want today. Then choose whether to keep it pure or blend in another movement language.</p>
+      </section>
 
-    <section class="builder" aria-labelledby="choose-title">
-      <div class="builder-main">
-        <div class="step-head">
-          <span>01</span>
-          <div><p class="eyebrow">PRIMARY CHOICE</p><h2 id="choose-title">What do you want to train?</h2></div>
-        </div>
-        <div id="primary-grid" class="choice-grid"></div>
+      <section class="builder" aria-labelledby="choose-title">
+        <div class="builder-main">
+          <div class="step-head">
+            <span>01</span>
+            <div><p class="eyebrow">PRIMARY CHOICE</p><h2 id="choose-title">What do you want to train?</h2></div>
+          </div>
+          <div id="primary-grid" class="choice-grid"></div>
 
-        <div class="step-head compact">
-          <span>02</span>
-          <div><p class="eyebrow">OPTIONAL BLEND</p><h2>Add another movement language.</h2></div>
-        </div>
-        <div id="blend-grid" class="blend-grid"></div>
+          <div class="step-head compact">
+            <span>02</span>
+            <div><p class="eyebrow">OPTIONAL BLEND</p><h2>Add another movement language.</h2></div>
+          </div>
+          <div id="blend-grid" class="blend-grid"></div>
 
-        <div class="step-head compact">
-          <span>03</span>
-          <div><p class="eyebrow">SESSION SHAPE</p><h2>How should today feel?</h2></div>
-        </div>
-        <div class="session-controls">
-          <fieldset>
-            <legend>Time</legend>
-            <div class="segmented" id="duration-control">
-              <button type="button" data-duration="25">25 min</button>
-              <button type="button" data-duration="40" class="selected">40 min</button>
-              <button type="button" data-duration="55">55 min</button>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>Energy</legend>
-            <div class="segmented" id="energy-control">
-              <button type="button" data-energy="gentle">Gentle</button>
-              <button type="button" data-energy="steady" class="selected">Steady</button>
-              <button type="button" data-energy="charged">Charged</button>
-            </div>
-          </fieldset>
-        </div>
-      </div>
-
-      <aside class="session-card" aria-live="polite">
-        <div class="session-card-top">
-          <span class="live-dot"></span>
-          <span>YOUR SESSION</span>
-        </div>
-        <div id="session-icon" class="session-icon">◒</div>
-        <p id="session-kicker" class="eyebrow">CONTROL</p>
-        <h2 id="session-title">Control</h2>
-        <p id="session-promise" class="promise"></p>
-
-        <div class="objective">
-          <span>OBJECTIVE</span>
-          <p id="session-objective"></p>
+          <div class="step-head compact">
+            <span>03</span>
+            <div><p class="eyebrow">SESSION SHAPE</p><h2>How should today feel?</h2></div>
+          </div>
+          <div class="session-controls">
+            <fieldset>
+              <legend>Time</legend>
+              <div class="segmented" id="duration-control">
+                <button type="button" data-duration="25">25 min</button>
+                <button type="button" data-duration="40" class="selected">40 min</button>
+                <button type="button" data-duration="55">55 min</button>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>Energy</legend>
+              <div class="segmented" id="energy-control">
+                <button type="button" data-energy="gentle">Gentle</button>
+                <button type="button" data-energy="steady" class="selected">Steady</button>
+                <button type="button" data-energy="charged">Charged</button>
+              </div>
+            </fieldset>
+          </div>
         </div>
 
-        <div class="goals">
-          <span>SUCCESS TODAY</span>
-          <ul id="session-goals"></ul>
+        <aside class="session-card" aria-live="polite">
+          <div class="session-card-top"><span class="live-dot"></span><span>YOUR SESSION</span></div>
+          <div id="session-icon" class="session-icon">◒</div>
+          <p id="session-kicker" class="eyebrow">CONTROL</p>
+          <h2 id="session-title">Control</h2>
+          <p id="session-promise" class="promise"></p>
+          <div class="objective"><span>OBJECTIVE</span><p id="session-objective"></p></div>
+          <div class="goals"><span>SUCCESS TODAY</span><ul id="session-goals"></ul></div>
+          <button id="build-session" class="cta" type="button">Build this session <span>→</span></button>
+        </aside>
+      </section>
+
+      <section id="session-plan" class="plan" hidden>
+        <div class="plan-head">
+          <div><p class="eyebrow">SESSION MAP</p><h2 id="plan-title">Control</h2></div>
+          <button type="button" id="edit-choices" class="ghost">Change choices</button>
         </div>
+        <div id="block-list" class="block-list"></div>
+        <div class="start-strip">
+          <div><b id="plan-objective"></b><small>Phase 3 will attach selected movements and progression rules to this session map.</small></div>
+          <button type="button" class="library-jump" data-view-target="library">Explore movements</button>
+        </div>
+      </section>
+    </div>
 
-        <button id="build-session" class="cta" type="button">Build this session <span>→</span></button>
-      </aside>
-    </section>
-
-    <section id="session-plan" class="plan" hidden>
-      <div class="plan-head">
-        <div><p class="eyebrow">SESSION MAP</p><h2 id="plan-title">Control</h2></div>
-        <button type="button" id="edit-choices" class="ghost">Change choices</button>
-      </div>
-      <div id="block-list" class="block-list"></div>
-      <div class="start-strip">
-        <div><b id="plan-objective"></b><small>Phase 2 will attach movements, visuals and progression steps to each block.</small></div>
-        <button type="button" id="phase-gate">Phase 1 prototype</button>
-      </div>
+    <section id="library-view" class="library-view" hidden>
+      <header class="library-hero">
+        <p class="eyebrow">MOVEMENT LIBRARY</p>
+        <h1>See the pathway, not just the exercise.</h1>
+        <p class="lead">Every movement shows the objective, a simple visual sequence, technique cues and where it sits between an easier option and the next progression.</p>
+      </header>
+      <div id="domain-filters" class="filter-row"></div>
+      <div id="movement-grid" class="movement-grid"></div>
     </section>
   </main>
+
+  <dialog id="movement-dialog" class="movement-dialog" aria-label="Movement detail">
+    <div id="movement-dialog-content"></div>
+  </dialog>
 
   <footer>
     <span>De-Movement · De-Omega-Point</span>
@@ -105,6 +113,7 @@
   </footer>
 
   <script src="engine.js"></script>
+  <script src="movements.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
