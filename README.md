@@ -46,7 +46,7 @@ Phase 1 is ready to advance when a user can:
 
 ## Status
 
-**Phase 4 — Movement Paths + Passport in verification**
+**Phase 7 — Accounts + Coaching Platform built; live Supabase activation pending**
 
 
 ## Current product capabilities
@@ -60,3 +60,32 @@ Phase 1 is ready to advance when a user can:
 - readiness criteria and prerequisite gating
 
 The Passport is deliberately not an automatic skill-unlocking system. Criteria inform the human decision; they do not make it.
+
+
+## Phase 6 — Personalisation + Training Intelligence
+
+Built:
+
+- local training profile and goals
+- daily readiness check-in
+- completed-session / Flow history
+- effort, control and confidence ratings
+- seven-day movement exposure
+- deterministic, explainable next-session recommendations
+- explicit suppression of hard auto-recommendations when the Mover marks something for review
+
+## Phase 7 — Accounts + Coaching Platform
+
+Built:
+
+- optional Supabase account layer
+- Mover / Coach / Administrator roles
+- cross-device Mover data sync architecture
+- Coach invitations
+- assigned-session workflow
+- private Coach notes
+- Coach evidence dashboard
+- Administrator role, suspension and relationship controls
+- RLS and server-checked RPC security model
+
+Phase 7 code verification is complete. Live multi-account acceptance testing requires a connected Supabase project. See `CLOUD-SETUP.md`.
