@@ -16,11 +16,12 @@
     </a>
     <nav class="view-nav" aria-label="Product views">
       <button type="button" class="active" data-view-target="choose">Choose</button>
+      <button type="button" data-view-target="training">Today</button>
       <button type="button" data-view-target="library">Movement Library</button>
       <button type="button" data-view-target="passport">Movement Passport</button>
       <button type="button" data-view-target="flow">Flow Lab</button>
     </nav>
-    <span class="phase-chip">PHASE 5 · FLOW LAB</span>
+    <span class="phase-chip">PHASE 6 · PERSONALISATION</span>
   </header>
 
   <main class="page">
@@ -97,6 +98,52 @@
         <div id="runner-card"></div>
       </section>
     </div>
+
+    <section id="training-view" class="training-view" hidden>
+      <header class="training-hero">
+        <div>
+          <p class="eyebrow">MY TRAINING</p>
+          <h1>Train the person, not the calendar.</h1>
+          <p class="lead">Your goals, today’s readiness and recent training exposure shape a transparent recommendation. Nothing here changes your Movement Passport automatically.</p>
+        </div>
+        <div class="training-principle"><b>Explainable by design</b><span>Every recommendation shows the signals that influenced it. You can accept it, change it or ignore it.</span></div>
+      </header>
+
+      <div class="training-layout">
+        <section class="training-panel">
+          <div class="training-panel-head"><div><p class="eyebrow">PROFILE</p><h2>What are you building?</h2></div><span>Choose up to 3 goals</span></div>
+          <div id="goal-choices" class="goal-choices"></div>
+          <div class="training-fields">
+            <label>Training days / week<select id="profile-days"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option></select></label>
+            <label>Preferred session<select id="profile-minutes"><option value="25">25 minutes</option><option value="40" selected>40 minutes</option><option value="55">55 minutes</option></select></label>
+          </div>
+          <div class="training-panel-head compact"><div><p class="eyebrow">STYLE</p><h3>Movement languages you want more of</h3></div></div>
+          <div id="style-choices" class="style-choices"></div>
+          <button type="button" id="save-profile" class="training-save">Save training profile</button>
+        </section>
+
+        <section class="training-panel">
+          <div class="training-panel-head"><div><p class="eyebrow">TODAY</p><h2>Readiness check-in</h2></div><span id="readiness-time">Not checked today</span></div>
+          <div id="readiness-controls" class="readiness-controls"></div>
+          <label class="review-check"><input type="checkbox" id="readiness-review"><span><b>Something needs review today</b><small>Use this for a new concern, pain, injury, or anything that makes hard training feel inappropriate.</small></span></label>
+          <label class="readiness-note">Optional note<textarea id="readiness-note" maxlength="500" placeholder="Only add what is useful for your own training decision."></textarea></label>
+          <button type="button" id="save-readiness" class="training-save">Save today’s check-in</button>
+        </section>
+      </div>
+
+      <section class="recommendation-panel" id="recommendation-panel"></section>
+
+      <section class="training-insights">
+        <div class="training-panel">
+          <div class="training-panel-head"><div><p class="eyebrow">7-DAY EXPOSURE</p><h2>Movement balance</h2></div></div>
+          <div id="exposure-bars" class="exposure-bars"></div>
+        </div>
+        <div class="training-panel">
+          <div class="training-panel-head"><div><p class="eyebrow">RECENT HISTORY</p><h2>What you actually did</h2></div><button type="button" id="clear-history" class="history-clear">Clear local history</button></div>
+          <div id="training-history" class="training-history"></div>
+        </div>
+      </section>
+    </section>
 
     <section id="library-view" class="library-view" hidden>
       <header class="library-hero">
@@ -176,6 +223,8 @@
   <script src="paths.js"></script>
   <script src="passport.js"></script>
   <script src="flow.js"></script>
+  <script src="training-data.js"></script>
+  <script src="training-intelligence.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
