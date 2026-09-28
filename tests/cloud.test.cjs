@@ -25,9 +25,10 @@ assert(schema.includes('create policy saved_flows_delete'));
 assert(schema.includes('public.dm_account_active()'));
 assert(!/as \$\s/.test(schema),'malformed SQL dollar quote');
 
-assert(/supabaseUrl:''/.test(config));
-assert(/supabaseAnonKey:''/.test(config));
+assert(/supabaseUrl:'https:\/\/[a-z0-9]+\.supabase\.co'/.test(config),'live Supabase URL missing');
+assert(/supabaseAnonKey:'sb_publishable_[^']+'/.test(config),'publishable browser key missing');
 assert(!/service[_-]?role\s*[:=]\s*['"][^'"]+/i.test(config),'service role secret must not appear in browser config');
+assert(!/eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/.test(config),'legacy JWT anon key should not be committed when a publishable key is available');
 
 for(const file of ['account.html','invite.html','coach.html','administrator.html']){
  const html=fs.readFileSync(path.join(root,file),'utf8');
