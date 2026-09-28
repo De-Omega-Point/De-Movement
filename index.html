@@ -21,7 +21,8 @@
       <button type="button" data-view-target="passport">Movement Passport</button>
       <button type="button" data-view-target="flow">Flow Lab</button>
     </nav>
-    <span class="phase-chip">PHASE 6 · PERSONALISATION</span>
+    <a class="account-link" id="cloud-account-link" href="account.html">Guest · Account</a>
+    <span class="phase-chip">PHASE 7 · COACHING PLATFORM</span>
   </header>
 
   <main class="page">
@@ -131,6 +132,7 @@
         </section>
       </div>
 
+      <section id="coach-assignment-panel" class="coach-assignment-panel" hidden></section>
       <section class="recommendation-panel" id="recommendation-panel"></section>
 
       <section class="training-insights">
@@ -225,6 +227,9 @@
   <script src="flow.js"></script>
   <script src="training-data.js"></script>
   <script src="training-intelligence.js"></script>
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-adapter.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
