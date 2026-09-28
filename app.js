@@ -8,12 +8,13 @@ const PP=window.DeMovementPassport;
 const F=window.DeMovementFlow;
 const D=window.DeMovementTrainingData;
 const I=window.DeMovementIntelligence;
+const B=window.DeMovementBackend||{mode:'local'};
 if(!E||!L||!C||!R||!P||!PP||!F||!D||!I)throw new Error('De-Movement modules failed to load.');
 
 const initialPassport=PP.load();
 const initialProfile=D.loadProfile();
 const initialReadiness=D.loadReadiness();
-const state={primary:'control',blend:'none',duration:40,energy:'steady',view:'choose',domain:'all',plan:null,runner:null,tick:null,passport:initialPassport,flow:F.load(initialPassport),flowFamily:'all',flowPlan:null,flowRunner:null,flowTick:null,profile:initialProfile,readiness:initialReadiness,history:D.loadHistory(),sessionSaved:false,flowSaved:false};
+const state={primary:'control',blend:'none',duration:40,energy:'steady',view:'choose',domain:'all',plan:null,runner:null,tick:null,passport:initialPassport,flow:F.load(initialPassport),flowFamily:'all',flowPlan:null,flowRunner:null,flowTick:null,profile:initialProfile,readiness:initialReadiness,history:D.loadHistory(),sessionSaved:false,flowSaved:false,account:null,assignments:[],activeAssignment:null,cloudReady:false};
 const $=s=>document.querySelector(s);
 const colors={lime:'#b8ff56',coral:'#ff7a66',violet:'#b39cff',aqua:'#70e6d2',gold:'#ffd26f',blue:'#77aefc'};
 const domainColours={calisthenics:'#b8ff56',locomotion:'#70e6d2',acrobatics:'#ffd26f',mobility:'#77aefc'};
@@ -137,6 +138,62 @@ function renderChooser(){
 }
 
 
+
+function cloudMover(){return B.mode==='supabase'&&state.cloudReady&&state.account?.role==='mover'&&state.account?.account_status==='active'}
+function cloudFire(promise){Promise.resolve(promise).catch(e=>console.warn('De-Movement cloud sync:',e.message||e))}
+function cloudLogToLocal(x){
+ return D.normaliseHistory([{
+  id:x.id,kind:x.kind,completedAt:x.completed_at,title:x.title,primary:x.primary_intent||'',blend:x.blend||'none',energy:x.energy||'steady',
+  durationMinutes:x.duration_minutes||0,effort:x.effort,control:x.control,confidence:x.confidence,movements:x.movements||[],domains:x.domains||[],notes:x.notes||''
+ }])[0];
+}
+function logFingerprint(x){return [x.kind,x.completedAt,x.title,x.durationMinutes,x.effort,x.control,x.confidence].join('|')}
+async function cloudSavePassport(){if(cloudMover())cloudFire(B.savePassport(state.passport))}
+async function cloudSaveProfile(){if(cloudMover())cloudFire(B.saveTrainingProfile(state.profile))}
+async function cloudSaveReadiness(){if(cloudMover())cloudFire(B.saveReadiness(state.readiness))}
+async function cloudSaveLog(item){if(cloudMover())cloudFire(B.saveTrainingLog(item))}
+async function cloudSaveFlow(){if(cloudMover())cloudFire(B.saveFlow('Current Flow',state.flow))}
+function updateAccountLink(){
+ const a=$('#cloud-account-link');if(!a)return;
+ if(B.mode!=='supabase'){a.textContent='Local · Account';return}
+ if(!state.account){a.textContent='Sign in · Account';return}
+ a.textContent=(state.account.role==='mover'?'Mover':state.account.role==='coach'?'Coach':'Administrator')+' · Account';
+ a.href=state.account.role==='coach'?'coach.html':state.account.role==='administrator'?'administrator.html':'account.html';
+ if(state.account.account_status==='suspended')a.textContent='Suspended · Account';
+}
+async function initCloud(){
+ updateAccountLink();
+ if(B.mode!=='supabase')return;
+ try{
+  const sess=await B.session();if(!sess){updateAccountLink();return}
+  const me=await B.me();state.account=me;updateAccountLink();
+  if(!me||me.account_status!=='active'||me.role!=='mover')return;
+  state.cloudReady=true;
+  let cloud=await B.loadMoverState();
+  if(cloud.trainingProfile){
+   state.profile=D.saveProfile({goalPaths:cloud.trainingProfile.goal_paths,daysPerWeek:cloud.trainingProfile.days_per_week,sessionMinutes:cloud.trainingProfile.session_minutes,preferredStyles:cloud.trainingProfile.preferred_styles});
+  }else cloudFire(B.saveTrainingProfile(state.profile));
+  if(cloud.passportState){
+   state.passport=PP.save(cloud.passportState);
+   state.flow=F.save({...state.flow,sequence:F.normaliseSequence(state.flow.sequence,state.passport)},state.passport);
+  }else cloudFire(B.savePassport(state.passport));
+  if(cloud.readiness){
+   const cr=D.normaliseReadiness({energy:cloud.readiness.energy,soreness:cloud.readiness.soreness,focus:cloud.readiness.focus,review:cloud.readiness.review,note:cloud.readiness.note,checkedAt:cloud.readiness.checked_at});
+   const localTime=state.readiness.checkedAt?Date.parse(state.readiness.checkedAt):0,cloudTime=cr.checkedAt?Date.parse(cr.checkedAt):0;
+   if(localTime>cloudTime)cloudFire(B.saveReadiness(state.readiness));else state.readiness=D.saveReadiness({...cr,checkedAt:cr.checkedAt});
+  }else if(state.readiness.checkedAt)cloudFire(B.saveReadiness(state.readiness));
+  const cloudLogs=(cloud.logs||[]).map(cloudLogToLocal).filter(Boolean);
+  const cloudKeys=new Set(cloudLogs.map(logFingerprint));
+  const unsynced=state.history.filter(x=>!cloudKeys.has(logFingerprint(x))).slice(0,50);
+  for(const item of unsynced)await B.saveTrainingLog(item);
+  state.history=D.saveHistory([...state.history,...cloudLogs]);
+  const currentFlow=(cloud.flows||[]).find(x=>x.name==='Current Flow');
+  if(currentFlow?.builder)state.flow=F.save(currentFlow.builder,state.passport);else cloudFire(B.saveFlow('Current Flow',state.flow));
+  state.assignments=cloud.assignments||[];
+  renderChooser();renderTraining();renderPassport();renderFlow();
+ }catch(e){console.warn('De-Movement cloud connection:',e.message||e)}
+}
+
 const goalLabels={handstand:'Handstand',planche:'Planche','front-lever':'Front Lever',compression:'Compression',locomotion:'Ground Locomotion','soft-acrobatics':'Soft Acrobatics',mobility:'Mobility'};
 const styleLabels={calisthenics:'Calisthenics',locomotion:'Locomotion',acrobatics:'Soft Acrobatics',mobility:'Mobility'};
 const primaryLabels={control:'Control',strength:'Strength',compression:'Compression',locomotion:'Move',acrobatics:'Acrobatics',mobility:'Range'};
@@ -172,6 +229,14 @@ function renderTraining(){
  $('#readiness-note').value=state.readiness.note||'';
  $('#readiness-time').textContent=state.readiness.checkedAt?'Last saved '+new Date(state.readiness.checkedAt).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'Not checked yet';
 
+ const assignmentPanel=$('#coach-assignment-panel');
+ const assignment=(state.assignments||[]).find(x=>['assigned','started'].includes(x.status));
+ if(assignment){
+  const p=assignment.payload||{},due=assignment.due_at?' · due '+new Date(assignment.due_at).toLocaleDateString('en-AU'):'';
+  assignmentPanel.hidden=false;
+  assignmentPanel.innerHTML=`<div><p class="eyebrow">COACH ASSIGNMENT</p><h2>${esc(assignment.title)}</h2><p>${esc(primaryLabels[p.primary]||p.primary||'Session')} · ${p.duration||40} min · ${esc(E.ENERGY[p.energy||'steady']?.label||'Steady')}${esc(due)}</p></div><button type="button" id="apply-assignment">Open assignment →</button>`;
+  $('#apply-assignment').onclick=async()=>{state.primary=p.primary||'control';state.blend=p.blend||'none';state.duration=[25,40,55].includes(Number(p.duration))?Number(p.duration):40;state.energy=E.ENERGY[p.energy]?p.energy:'steady';state.activeAssignment=assignment;if(assignment.status==='assigned'&&cloudMover()){try{await B.updateAssignment(assignment.id,'started');assignment.status='started'}catch(e){console.warn(e)}}renderChooser();setView('choose')};
+ }else{assignmentPanel.hidden=true;assignmentPanel.innerHTML=''}
  const recPanel=$('#recommendation-panel');
  if(rec.mode==='review'){
   recPanel.className='recommendation-panel review';
@@ -202,11 +267,11 @@ function renderTraining(){
 
 $('#save-profile').onclick=()=>{
  state.profile=D.saveProfile({...state.profile,daysPerWeek:Number($('#profile-days').value),sessionMinutes:Number($('#profile-minutes').value)});
- renderTraining();
+ cloudSaveProfile();renderTraining();
 };
 $('#save-readiness').onclick=()=>{
  state.readiness=D.saveReadiness({...state.readiness,review:$('#readiness-review').checked,note:$('#readiness-note').value});
- renderTraining();
+ cloudSaveReadiness();renderTraining();
 };
 $('#clear-history').onclick=()=>{
  if(!confirm('Clear your local De-Movement training history on this device?'))return;
@@ -298,21 +363,21 @@ function openPassportNode(pathId,nodeId){
   </div>`;
   root.querySelector('.dialog-close').onclick=()=>dlg.close();
   root.querySelectorAll('[data-passport-criterion]').forEach(cb=>cb.onchange=()=>{
-    state.passport=PP.save(PP.setCriterion(state.passport,pathId,nodeId,Number(cb.dataset.passportCriterion),cb.checked));
+    state.passport=PP.save(PP.setCriterion(state.passport,pathId,nodeId,Number(cb.dataset.passportCriterion),cb.checked));cloudSavePassport();
     openPassportNode(pathId,nodeId);renderPassport();
   });
   root.querySelectorAll('[data-passport-action]').forEach(b=>b.onclick=()=>{
     if(b.disabled)return;
     if(status==='mastered'&&b.dataset.passportAction==='practising'&&!confirm('Reassessing this skill will lock later nodes in this path. Continue?'))return;
     try{
-      state.passport=PP.save(PP.setStatus(state.passport,pathId,nodeId,b.dataset.passportAction));
+      state.passport=PP.save(PP.setStatus(state.passport,pathId,nodeId,b.dataset.passportAction));cloudSavePassport();
       syncFlowWithPassport();openPassportNode(pathId,nodeId);renderPassport();
     }catch(e){alert(e.message)}
   });
   const reset=root.querySelector('[data-passport-reset]');
   if(reset)reset.onclick=()=>{
     if(!confirm('Reset this node? Later nodes in this path will also be locked.'))return;
-    try{state.passport=PP.save(PP.setStatus(state.passport,pathId,nodeId,'locked'));syncFlowWithPassport();openPassportNode(pathId,nodeId);renderPassport()}catch(e){alert(e.message)}
+    try{state.passport=PP.save(PP.setStatus(state.passport,pathId,nodeId,'locked'));cloudSavePassport();syncFlowWithPassport();openPassportNode(pathId,nodeId);renderPassport()}catch(e){alert(e.message)}
   };
   const linkedBtn=root.querySelector('[data-linked-movement]');
   if(linkedBtn)linkedBtn.onclick=()=>{dlg.close();openMovement(linkedBtn.dataset.linkedMovement)};
@@ -328,7 +393,7 @@ const flowFamilies={
   anchor:'Skill Anchors'
 };
 function flowFamilyLabel(key){return flowFamilies[key]||key}
-function flowPersist(next){state.flow=F.save(next,state.passport);state.flowPlan=null}
+function flowPersist(next){state.flow=F.save(next,state.passport);state.flowPlan=null;cloudSaveFlow()}
 function flowMoveName(id){return L.get(id)?.name||id}
 
 function renderFlow(){
@@ -416,7 +481,7 @@ function renderFlowRunner(){
       if(state.flowSaved)return;
       const ids=state.flowPlan.movements.map(x=>x.id);
       const item=D.persistLog({kind:'flow',title:'Flow · '+state.flowPlan.analysis.label,primary:'locomotion',blend:'mobility',energy:state.flowPlan.rhythm==='express'?'charged':state.flowPlan.rhythm==='learn'?'gentle':'steady',durationMinutes:Math.max(1,Math.round(state.flowPlan.totalSeconds/60)),effort:Number($('#flow-effort').value),control:Number($('#flow-control').value),confidence:Number($('#flow-confidence').value),movements:ids,domains:movementDomains(ids)});
-      state.history=D.normaliseHistory([item,...state.history]);state.flowSaved=true;renderFlowRunner();
+      state.history=D.normaliseHistory([item,...state.history]);cloudSaveLog(item);state.flowSaved=true;renderFlowRunner();
     };
     $('#repeat-flow').onclick=()=>startFlowPlayer();
     $('#back-flow').onclick=()=>{$('#flow-player').hidden=true;$('#flow-view').scrollIntoView({behavior:'smooth',block:'start'})};
@@ -531,7 +596,9 @@ function renderRunner(){
      if(state.sessionSaved)return;
      const ids=state.plan.movements.map(x=>x.id);
      const item=D.persistLog({kind:'session',title:state.plan.title,primary:state.plan.primary,blend:state.plan.blend,energy:state.plan.energy,durationMinutes:state.plan.duration,effort:Number($('#session-effort').value),control:Number($('#session-control').value),confidence:Number($('#session-confidence').value),movements:ids,domains:movementDomains(ids)});
-     state.history=D.normaliseHistory([item,...state.history]);state.sessionSaved=true;renderRunner();
+     state.history=D.normaliseHistory([item,...state.history]);cloudSaveLog(item);state.sessionSaved=true;
+     if(state.activeAssignment&&cloudMover()){const done=state.activeAssignment;state.activeAssignment=null;state.assignments=state.assignments.filter(x=>x.id!==done.id);cloudFire(B.updateAssignment(done.id,'completed'))}
+     renderRunner();
    };
    $('#close-runner').onclick=()=>{$('#guided-session').hidden=true;$('#session-plan').scrollIntoView({behavior:'smooth'})};
    return;
@@ -576,5 +643,5 @@ $('#edit-choices').onclick=()=>document.querySelector('.builder').scrollIntoView
 document.querySelectorAll('[data-view-target]').forEach(b=>b.onclick=e=>{e.preventDefault();setView(b.dataset.viewTarget)});
 $('#movement-dialog').addEventListener('click',e=>{if(e.target===$('#movement-dialog'))$('#movement-dialog').close()});
 $('#passport-dialog').addEventListener('click',e=>{if(e.target===$('#passport-dialog'))$('#passport-dialog').close()});
-renderChooser();renderTraining();renderLibrary();renderPassport();renderFlow();
+renderChooser();renderTraining();renderLibrary();renderPassport();renderFlow();updateAccountLink();initCloud();
 })();
