@@ -356,7 +356,9 @@ grant select,insert on table public.training_logs to authenticated;
 grant select,insert,update,delete on table public.saved_flows to authenticated;
 grant select on table public.coach_movers to authenticated;
 grant select,insert on table public.coach_notes to authenticated;
-grant select,insert,update on table public.coach_assignments to authenticated;
+grant select,insert on table public.coach_assignments to authenticated;
+revoke update on table public.coach_assignments from authenticated;
+grant update(status,completed_at) on table public.coach_assignments to authenticated;
 grant select on table public.coach_invites to authenticated;
 grant select on table public.admin_audit_log to authenticated;
 
