@@ -180,7 +180,7 @@ async function initCloud(){
   if(cloud.readiness){
    const cr=D.normaliseReadiness({energy:cloud.readiness.energy,soreness:cloud.readiness.soreness,focus:cloud.readiness.focus,review:cloud.readiness.review,note:cloud.readiness.note,checkedAt:cloud.readiness.checked_at});
    const localTime=state.readiness.checkedAt?Date.parse(state.readiness.checkedAt):0,cloudTime=cr.checkedAt?Date.parse(cr.checkedAt):0;
-   if(localTime>cloudTime)cloudFire(B.saveReadiness(state.readiness));else state.readiness=D.saveReadiness({...cr,checkedAt:cr.checkedAt});
+   if(localTime>cloudTime)cloudFire(B.saveReadiness(state.readiness));else state.readiness=D.saveReadiness({...cr,checkedAt:cr.checkedAt},false);
   }else if(state.readiness.checkedAt)cloudFire(B.saveReadiness(state.readiness));
   const cloudLogs=(cloud.logs||[]).map(cloudLogToLocal).filter(Boolean);
   const cloudKeys=new Set(cloudLogs.map(logFingerprint));
