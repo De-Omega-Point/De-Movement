@@ -66,7 +66,7 @@ function write(key,value){if(typeof localStorage!=='undefined')try{localStorage.
 function loadProfile(){return normaliseProfile(read(PROFILE_KEY,null))}
 function saveProfile(x){return write(PROFILE_KEY,normaliseProfile(x))}
 function loadReadiness(){return normaliseReadiness(read(READINESS_KEY,null))}
-function saveReadiness(x){const out=normaliseReadiness({...x,checkedAt:new Date().toISOString()});return write(READINESS_KEY,out)}
+function saveReadiness(x,touch=true){const out=normaliseReadiness({...x,checkedAt:touch?new Date().toISOString():(x?.checkedAt||null)});return write(READINESS_KEY,out)}
 function loadHistory(){return normaliseHistory(read(HISTORY_KEY,[]))}
 function saveHistory(x){return write(HISTORY_KEY,normaliseHistory(x))}
 function addLog(history,entry){
