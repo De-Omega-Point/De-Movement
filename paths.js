@@ -70,7 +70,7 @@ const PATHS=[
  id:'soft-acrobatics',name:'Soft Acrobatics',category:'Orientation + Transition',accent:'gold',icon:'✦',
  promise:'Build floor confidence and controlled inversion transitions before adding speed or complexity.',
  nodes:[
-  {id:'rock-to-squat',name:'Rock to Squat',level:'Foundation',criteria:['Rock through the rounded back without loading the head','Return to a balanced squat','Repeat 5 times without using uncontrolled momentum']},
+  {id:'rock-to-squat',name:'Rock to Squat',movementId:'rock-to-squat',level:'Foundation',criteria:['Rock through the rounded back without loading the head','Return to a balanced squat','Repeat 5 times without using uncontrolled momentum']},
   {id:'forward-roll',name:'Forward Roll',movementId:'forward-roll',level:'Foundation',criteria:['Complete 5 smooth rolls without pressure on the head','Finish each roll balanced','Control the return to standing or squat']},
   {id:'cartwheel-prep',name:'Cartwheel Prep',movementId:'cartwheel-prep',level:'Developing',criteria:['Transfer weight through both hands comfortably','Practise both sides','Keep the landing quiet and controlled']},
   {id:'low-cartwheel',name:'Low Cartwheel',level:'Skill',criteria:['Travel laterally through a clear hand-hand-foot-foot pattern','Keep the movement controlled rather than thrown','Finish facing the opposite direction with balance']},
