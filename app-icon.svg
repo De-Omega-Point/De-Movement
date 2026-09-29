@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="De-Movement">
+  <rect width="512" height="512" rx="112" fill="#0b0d0c"/>
+  <circle cx="114" cy="118" r="24" fill="#b8ff56"/>
+  <path d="M112 182h80c82 0 132 45 132 120s-50 122-132 122h-80V182Zm76 188c47 0 76-24 76-68 0-43-29-66-76-66h-18v134h18Z" fill="#f4f2e9"/>
+  <path d="M338 182h34l28 59 28-59h34v242h-54V296l-8 19-28-54-28 54-8-19v128h-52V182h54Z" fill="#70e6d2"/>
+</svg>
