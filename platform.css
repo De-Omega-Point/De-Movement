@@ -16,3 +16,11 @@ h1,h2,h3,p{margin-top:0}h1{font-size:clamp(2.6rem,6vw,5rem);line-height:.94;lett
 .assistant-output{border:1px solid var(--line);border-radius:15px;background:#0a0d0b;padding:14px;margin-top:10px}.assistant-output>span{font-size:.52rem;letter-spacing:.12em;color:var(--violet);font-weight:900}.assistant-output h3{font-size:1.2rem;margin:7px 0 5px}.assistant-output>p{color:#c4ccc7;font-size:.76rem}.assistant-output ul{padding-left:18px;color:#aab3ad;font-size:.7rem}.assistant-output li{margin:4px 0}.assistant-decision{border-top:1px solid var(--line);margin-top:12px;padding-top:11px}.assistant-decision>b{display:block;font-size:.52rem;letter-spacing:.12em;color:var(--muted)}.assistant-decision p{color:#aeb7b1;font-size:.7rem;margin:5px 0 10px}
 @media(max-width:1050px){.attention-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:620px){.attention-grid{grid-template-columns:1fr}.intelligence-head{flex-direction:column}.assistant-inline{grid-template-columns:1fr}.assistant-inline button{min-height:46px}}
+
+
+/* Phase 9 · Account and Policy surfaces */
+:where(button,a,input,select,textarea):focus-visible{outline:3px solid var(--aqua);outline-offset:3px}
+.account-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;border-top:1px solid var(--line);padding-top:18px;margin-top:20px}.account-controls h2{margin-bottom:4px}.account-controls p:not(.eyebrow){color:var(--muted);font-size:.72rem;margin:0;max-width:520px}.cloud-controls{border:1px solid rgba(255,122,102,.2);border-radius:16px;padding:16px;margin-top:12px;background:rgba(255,122,102,.025)}.policy-page .card p{color:#b8c0bb}.policy-page .card h2{letter-spacing:-.03em}.policy-page .lead{font-size:1rem}.footer a{color:#7f8b84}
+@media(pointer:coarse){button,.btn,input,select{min-height:44px}}
+@media(max-width:700px){.account-controls{grid-template-columns:1fr}.account-controls .actions{width:100%}.account-controls .actions>*{flex:1}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
