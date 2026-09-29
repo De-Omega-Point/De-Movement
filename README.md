@@ -18,12 +18,15 @@ The product is organised around **choice → objective → session → progressi
 
 ## Build phases
 
-1. **Product DNA & interaction model**
-2. **Visual Movement Library**
-3. **Session Composer**
-4. **Movement Paths & Passport**
-5. **Flow Lab**
-6. **Commercial / account layer**
+1. **Product DNA & interaction model** ✅
+2. **Visual Movement Library** ✅
+3. **Session Composer** ✅
+4. **Movement Paths & Passport** ✅
+5. **Flow Lab** ✅
+6. **Personalisation + Training Intelligence** ✅
+7. **Accounts + Coaching Platform** ✅
+8. **Intelligence + Coach Assistant** ✅
+9. **Market Readiness + Pilot Infrastructure** ✅ engineering gate · live cohort pending
 
 ## Phase 1 design principles
 
@@ -46,7 +49,7 @@ Phase 1 is ready to advance when a user can:
 
 ## Status
 
-**Phase 7 — Accounts + Coaching Platform complete and live-verified**
+**Phase 9 — Market-readiness engineering complete; live cohort pilot ready to begin**
 
 
 ## Current product capabilities
@@ -107,3 +110,25 @@ Built:
 The Phase 8 intelligence engine is deterministic and auditable. A future generative language layer may improve phrasing, but it will sit behind the evidence engine and will not receive direct authority to progress skills or assign training.
 
 See `PHASE-8-INTELLIGENCE.md`.
+
+
+## Phase 9 — Market Readiness + Pilot
+
+Built and verified:
+
+- installable PWA shell
+- offline cache for the local movement and Assistant core
+- visible connectivity state
+- local-first onboarding
+- privacy notice and pilot terms
+- local data export and device reset
+- connected cloud export
+- authenticated account deletion Edge Function
+- explicit pilot feedback with RLS
+- Administrator pilot dashboard
+- keyboard, reduced-motion, touch-target and responsive hardening
+- Phase 9 automated release regression gate
+
+The engineering gate is complete. The real 5–10 person pilot remains an external validation step and must not be represented as completed before real participants use the product.
+
+See `PHASE-9-MARKET-READINESS.md` and `PILOT-RUNBOOK.md`.
