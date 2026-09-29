@@ -111,15 +111,22 @@ When signed in as an active Mover:
 
 Local data remains the immediate working copy. Cloud sync is additive rather than a login wall.
 
-## Not yet included
+## Phase 9 additions
 
-Phase 7 deliberately does not include:
+Market-readiness work now adds:
 
-- billing
-- public launch monitoring
-- formal data-retention automation
-- account-deletion Edge Function
-- AI Coach decision-making
-- production incident response
+- authenticated account deletion via the `delete-account` Edge Function;
+- explicit pilot feedback protected by RLS;
+- Administrator pilot metrics;
+- local and cloud data export controls;
+- privacy and pilot terms;
+- installable/offline PWA support.
 
-Those belong to later market-readiness work.
+Still outside the current pilot scope:
+
+- billing;
+- formal production support SLAs;
+- final commercial terms;
+- formal retention automation;
+- broad public-launch monitoring;
+- any external generative-AI service that would weaken the local-first core.
