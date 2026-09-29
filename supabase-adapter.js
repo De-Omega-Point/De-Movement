@@ -190,7 +190,7 @@ async function administratorPilotMetrics(){
   client.from('readiness_checkins').select('mover_id,checked_at').gte('checked_at',d30),
   client.from('passport_states').select('mover_id',{count:'exact'}),
   client.from('saved_flows').select('mover_id',{count:'exact'}),
-  client.from('pilot_feedback').select('id,author_id,area,rating,comment,build,created_at').order('created_at',{ascending:false}).limit(50)
+  client.from('pilot_feedback').select('id,author_id,area,rating,comment,build,created_at',{count:'exact'}).order('created_at',{ascending:false}).limit(50)
  ]);
  for(const r of [movers,coaches,logs30,readiness30,passports,flows,feedback])fail(r.error);
  const logs=logs30.data||[],rds=readiness30.data||[],fb=feedback.data||[];
@@ -210,7 +210,7 @@ async function administratorPilotMetrics(){
   averageEffort30:avg(logs,'effort'),
   averageControl30:avg(logs,'control'),
   averageConfidence30:avg(logs,'confidence'),
-  feedbackCount:fb.length,
+  feedbackCount:feedback.count||fb.length,
   feedbackAverage:avg(fb,'rating'),
   feedback:fb
  };
