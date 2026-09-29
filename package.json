@@ -1,9 +1,9 @@
 {
   "name": "de-movement",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "description": "Choose how you move — De-Omega-Point movement training prototype",
   "scripts": {
-    "test": "node --check app.js && node --check paths.js && node --check passport.js && node --check flow.js && node --check training-data.js && node --check training-intelligence.js && node --check assistant-engine.js && node --check supabase-adapter.js && node --check account.js && node --check invite.js && node --check coach.js && node --check administrator.js && node tests/phase1.test.cjs && node tests/library.test.cjs && node tests/composer.test.cjs && node tests/passport.test.cjs && node tests/flow.test.cjs && node tests/personalisation.test.cjs && node tests/cloud.test.cjs && node tests/assistant.test.cjs && node tests/assistant-ui.test.cjs"
+    "test": "node --check app.js && node --check paths.js && node --check passport.js && node --check flow.js && node --check training-data.js && node --check training-intelligence.js && node --check assistant-engine.js && node --check supabase-adapter.js && node --check account.js && node --check invite.js && node --check coach.js && node --check administrator.js && node tests/phase1.test.cjs && node tests/library.test.cjs && node tests/composer.test.cjs && node tests/passport.test.cjs && node tests/flow.test.cjs && node tests/personalisation.test.cjs && node tests/cloud.test.cjs && node tests/assistant.test.cjs && node tests/assistant-ui.test.cjs && node tests/phase9.test.cjs"
   }
 }
