@@ -5,10 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b0d0c">
   <meta name="description" content="De-Movement — choose how you move. Calisthenics, locomotion, soft acrobatics, mobility and flow.">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="De-Movement">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="app-icon.svg" type="image/svg+xml">
   <title>De-Movement · Choose how you move</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="topbar">
     <a class="brand" href="#" data-view-target="choose" aria-label="De-Movement home">
       <span class="brand-dot"></span>
@@ -23,10 +29,10 @@
       <button type="button" data-view-target="flow">Flow Lab</button>
     </nav>
     <a class="account-link" id="cloud-account-link" href="account.html">Guest · Account</a>
-    <span class="phase-chip">PHASE 8 · INTELLIGENCE</span>
+    <span class="phase-chip">PHASE 9 · PILOT READY</span>
   </header>
 
-  <main class="page">
+  <main class="page" id="main-content">
     <div id="choose-view">
       <section class="intro">
         <p class="eyebrow">CHOOSE HOW YOU MOVE</p>
@@ -259,5 +265,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-adapter.js"></script>
   <script src="app.js"></script>
+  <script src="market-ready.js"></script>
 </body>
 </html>
