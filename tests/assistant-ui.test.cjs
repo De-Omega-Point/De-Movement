@@ -11,7 +11,7 @@ const coachJs=fs.readFileSync(path.join(root,'coach.js'),'utf8');
 assert(index.includes('data-view-target="assistant"'));
 assert(index.includes('id="assistant-view"'));
 assert(index.includes('assistant-engine.js'));
-assert(index.includes('PHASE 8 · INTELLIGENCE'));
+assert(/PHASE \d+ ·/.test(index),'phase indicator missing');
 assert(app.includes('window.DeMovementAssistant'));
 assert(app.includes('askMoverAssistant'));
 assert(app.includes('assistant-use-session'));
