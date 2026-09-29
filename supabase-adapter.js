@@ -139,6 +139,83 @@ async function createAssignment(input){
  const {data,error}=await client.from('coach_assignments').insert(row).select().single();fail(error);return data;
 }
 
+async function submitPilotFeedback(input={}){
+ const u=await user();if(!u)throw new Error('Sign in to send pilot feedback.');
+ const areas=['onboarding','session','passport','flow','assistant','coaching','account','other'];
+ const area=areas.includes(input.area)?input.area:'other';
+ const rating=Math.max(1,Math.min(5,Math.round(Number(input.rating)||0)));
+ const comment=String(input.comment||'').trim().slice(0,2000);
+ if(!comment)throw new Error('Add a short comment first.');
+ const {data,error}=await client.from('pilot_feedback').insert({author_id:u.id,area,rating,comment,build:String(input.build||'0.9.0').slice(0,30)}).select().single();
+ fail(error);return data;
+}
+async function exportMyCloudData(){
+ const profile=await me();if(!profile)throw new Error('Sign in first.');
+ const out={exportedAt:new Date().toISOString(),profile};
+ if(profile.role==='mover'){
+   out.mover=await loadMoverState(profile.id);
+ }else if(profile.role==='coach'){
+   const [relationships,notes,assignments,invites]=await Promise.all([
+     coachRelationships(),
+     client.from('coach_notes').select('*').eq('coach_id',profile.id).order('created_at',{ascending:false}),
+     client.from('coach_assignments').select('*').eq('coach_id',profile.id).order('created_at',{ascending:false}),
+     client.from('coach_invites').select('id,email,display_name,expires_at,claimed_at,created_at').eq('coach_id',profile.id).order('created_at',{ascending:false})
+   ]);
+   for(const r of [notes,assignments,invites])fail(r.error);
+   out.coach={relationships,notes:notes.data||[],assignments:assignments.data||[],invites:invites.data||[]};
+ }else if(profile.role==='administrator'){
+   const {data,error}=await client.from('admin_audit_log').select('*').eq('actor_id',profile.id).order('created_at',{ascending:false});fail(error);
+   out.administrator={auditActions:data||[]};
+ }
+ const {data:feedback,error:feedbackError}=await client.from('pilot_feedback').select('*').eq('author_id',profile.id).order('created_at',{ascending:false});fail(feedbackError);
+ out.pilotFeedback=feedback||[];
+ return out;
+}
+async function deleteAccount(){
+ if(!client)throw new Error('Cloud account is not connected.');
+ const {data,error}=await client.functions.invoke('delete-account',{body:{confirm:'DELETE'}});
+ fail(error);
+ if(data?.error){
+   if(data.error==='last_administrator')throw new Error('Create another active Administrator before deleting the last Administrator account.');
+   throw new Error(data.error);
+ }
+ return data;
+}
+async function administratorPilotMetrics(){
+ const now=Date.now(),d7=new Date(now-7*86400000).toISOString(),d30=new Date(now-30*86400000).toISOString();
+ const [movers,coaches,logs30,readiness30,passports,flows,feedback]=await Promise.all([
+  client.from('profiles').select('id',{count:'exact',head:true}).eq('role','mover').eq('account_status','active'),
+  client.from('profiles').select('id',{count:'exact',head:true}).eq('role','coach').eq('account_status','active'),
+  client.from('training_logs').select('mover_id,kind,completed_at,effort,control,confidence').gte('completed_at',d30),
+  client.from('readiness_checkins').select('mover_id,checked_at').gte('checked_at',d30),
+  client.from('passport_states').select('mover_id',{count:'exact'}),
+  client.from('saved_flows').select('mover_id',{count:'exact'}),
+  client.from('pilot_feedback').select('id,author_id,area,rating,comment,build,created_at').order('created_at',{ascending:false}).limit(50)
+ ]);
+ for(const r of [movers,coaches,logs30,readiness30,passports,flows,feedback])fail(r.error);
+ const logs=logs30.data||[],rds=readiness30.data||[],fb=feedback.data||[];
+ const last7=logs.filter(x=>x.completed_at>=d7);
+ const unique=a=>new Set(a).size;
+ const avg=(arr,key)=>arr.length?Math.round(arr.reduce((n,x)=>n+(Number(x[key])||0),0)/arr.length*10)/10:0;
+ return {
+  activeMovers:movers.count||0,
+  activeCoaches:coaches.count||0,
+  sessions7:last7.length,
+  activeMovers7:unique(last7.map(x=>x.mover_id)),
+  sessions30:logs.length,
+  flowLogs30:logs.filter(x=>x.kind==='flow').length,
+  readiness30:rds.length,
+  passportUsers:passports.count||0,
+  savedFlows:flows.count||0,
+  averageEffort30:avg(logs,'effort'),
+  averageControl30:avg(logs,'control'),
+  averageConfidence30:avg(logs,'confidence'),
+  feedbackCount:fb.length,
+  feedbackAverage:avg(fb,'rating'),
+  feedback:fb
+ };
+}
+
 async function administratorProfiles(){
  const {data,error}=await client.from('profiles').select('id,email,display_name,role,account_status,created_at').order('created_at',{ascending:false});fail(error);return data||[];
 }
@@ -158,5 +235,5 @@ async function administratorTransferMover(relationshipId,coachId){
  const {data,error}=await client.rpc('dm_admin_transfer_mover',{relationship:relationshipId,new_coach:coachId});fail(error);return data;
 }
 
-return {mode,client,session,user,me,signIn,signOut,routeForRole,updateDisplayName,loadMoverState,saveTrainingProfile,savePassport,saveReadiness,saveTrainingLog,saveFlow,myAssignments,updateAssignment,profileById,coachRelationships,coachMoverData,coachRosterEvidence,createCoachInvite,claimCoachInvite,saveCoachNote,createAssignment,administratorProfiles,administratorRelationships,administratorSetRole,administratorSetAccountStatus,administratorTransferMover};
+return {mode,client,session,user,me,signIn,signOut,routeForRole,updateDisplayName,loadMoverState,saveTrainingProfile,savePassport,saveReadiness,saveTrainingLog,saveFlow,myAssignments,updateAssignment,profileById,coachRelationships,coachMoverData,coachRosterEvidence,createCoachInvite,claimCoachInvite,saveCoachNote,createAssignment,submitPilotFeedback,exportMyCloudData,deleteAccount,administratorPilotMetrics,administratorProfiles,administratorRelationships,administratorSetRole,administratorSetAccountStatus,administratorTransferMover};
 });
