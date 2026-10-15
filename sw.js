@@ -1,11 +1,11 @@
-const VERSION='demovement-v0.9.0';
+const VERSION='demovement-v0.9.1';
 const CORE=[
   './','./index.html','./styles.css','./engine.js','./movements.js','./composer.js','./runner.js',
   './paths.js','./passport.js','./flow.js','./training-data.js','./training-intelligence.js',
   './assistant-engine.js','./config.js','./supabase-adapter.js','./app.js','./market-ready.js',
   './manifest.webmanifest','./app-icon.svg','./account.html','./account.js','./platform.css',
   './coach.html','./coach.js','./administrator.html','./administrator.js','./invite.html','./invite.js',
-  './privacy.html','./terms.html'
+  './privacy.html','./terms.html','./yoga/','./knee-yoga/'
 ];
 
 self.addEventListener('install',event=>{
