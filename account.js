@@ -1,6 +1,6 @@
 (async()=>{'use strict';
 const B=window.DeMovementBackend,$=s=>document.querySelector(s),root=$('#account-root');
-const LOCAL_KEYS=['demovement.passport.v1','demovement.flow.v1','demovement.profile.v1','demovement.readiness.v1','demovement.history.v1','demovement.onboarding.v1','demovement.feedback.v1'];
+const LOCAL_KEYS=['demovement.passport.v1','demovement.flow.v1','demovement.profile.v1','demovement.readiness.v1','demovement.history.v1','demovement.onboarding.v1','demovement.feedback.v1','demovement.presscontrol.v2','de-movement-press-lab-v1'];
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function message(text,kind=''){return '<p class="notice '+kind+'">'+esc(text)+'</p>'}
