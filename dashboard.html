@@ -1,11 +1,63 @@
-<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10251f"><title>Training Dashboard · De-Movement</title><style>
-:root{font:16px system-ui,sans-serif;color:#edfff0;background:#0b1c17}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 90% 0,#245640,#0b1c17 55%)}main{max-width:1080px;margin:auto;padding:22px 16px 80px}a{color:#c4ff72}h1{font-size:clamp(34px,6vw,58px);letter-spacing:-.045em;margin:16px 0 8px}h2{margin-top:0}.muted{color:#b9d3c3}.top,.actions{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}.brand{color:#c4ff72;font-weight:900;letter-spacing:.1em}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}.metric,.panel{background:#19382c;border:1px solid #548568;border-radius:18px;padding:18px}.metric strong{font-size:32px;display:block;color:#c4ff72}.metric small{color:#b9d3c3}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;padding:12px 16px;background:#c4ff72;color:#11271a;text-decoration:none;font-weight:800}.button.alt{background:#28553c;color:#f2fff1;border:1px solid #679b73}.bar{height:14px;border-radius:12px;background:#365a44;overflow:hidden}.bar>span{display:block;background:#baff75;height:100%}.row{border-bottom:1px solid #40654e;padding:12px 0}.row:last-child{border:0}.chart{display:flex;align-items:end;gap:8px;height:190px;margin:20px 0}.column{flex:1;text-align:center;font-size:12px;color:#c7dec9}.column div{background:#92e9a3;min-height:2px;border-radius:5px 5px 0 0}.empty{padding:16px;border:1px dashed #64866b;border-radius:12px;color:#b9d3c3}@media(max-width:700px){.grid,.two{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.metric{padding:14px}.metric strong{font-size:26px}.actions a{flex:1}}</style></head><body><main><div class="top"><div class="brand">◉ DE-MOVEMENT / DASHBOARD</div><a href="./index.html">← Home</a></div><h1>Your movement. One view.</h1><p class="muted">A unified, read-only overview of De-Movement sessions and Press Lab exercises saved in this browser. No cloud upload required.</p><div class="actions"><a class="button" href="press-lab/">⚡ Open Press Lab</a><a class="button alt" href="index.html">Choose movement</a></div><section class="grid" id="metrics"></section><section class="two"><article class="panel"><h2>Press Lab · 12-week progress</h2><p class="muted">Exercise completion by training week.</p><div class="chart" id="chart"></div><div id="press-detail"></div></article><article class="panel"><h2>Movement history</h2><p class="muted">Completed sessions recorded by the main De-Movement app.</p><div id="history"></div></article></section><section class="panel" style="margin-top:14px"><h2>What to do next</h2><p id="next" class="muted"></p><p class="muted" style="font-size:13px">Privacy: both modules use local browser storage. Data from another device or browser will not appear here unless migrated. This dashboard does not modify your training records.</p></section></main><script>
-(()=>{'use strict';const $=s=>document.querySelector(s),safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));function read(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}}
-const p=read('de-movement-press-lab-v1')||{},logs=p.logs&&typeof p.logs==='object'&&!Array.isArray(p.logs)?p.logs:{},history=read('demovement.history.v1'),sessions=Array.isArray(history)?history:[],counts=[6,7,7,7],total=counts.reduce((a,b)=>a+b,0),names=['Monday','Tuesday','Thursday','Saturday'];let finished=0,exerciseCount=0;const weeks=Array.from({length:12},(_,i)=>{let done=0;names.forEach((d,j)=>{let dayDone=0;for(let k=0;k<counts[j];k++){if(logs[(i+1)+'|'+d+'|'+k]?.done){done++;dayDone++}}if(dayDone===counts[j])finished++});exerciseCount+=done;return Math.round(done/total*100)});const current=Math.max(1,Math.min(12,Number(p.week)||1));const latest=sessions.filter(x=>x&&typeof x==='object').sort((a,b)=>Date.parse(b.completedAt||0)-Date.parse(a.completedAt||0));
-$('#metrics').innerHTML=[['Movement sessions',latest.length],['Press exercises',exerciseCount],['Press sessions',finished+' / 48'],['Current week',current+' / 12']].map(x=>'<div class="metric"><small>'+x[0]+'</small><strong>'+x[1]+'</strong></div>').join('');
-$('#chart').innerHTML=weeks.map((v,i)=>'<div class="column"><div style="height:'+Math.max(2,v*1.4)+'px" title="Week '+(i+1)+': '+v+'%"></div>W'+(i+1)+'<br>'+v+'%</div>').join('');
-$('#press-detail').innerHTML='<p>Week '+current+': <strong>'+weeks[current-1]+'% complete</strong></p><div class="bar"><span style="width:'+weeks[current-1]+'%"></span></div>';
-$('#history').innerHTML=latest.length?latest.slice(0,8).map(x=>'<div class="row"><strong>'+safe(x.title||'Movement session')+'</strong><div class="muted">'+safe(x.kind||'session')+' · '+(Number(x.durationMinutes)||0)+' min · '+(x.completedAt&&!Number.isNaN(Date.parse(x.completedAt))?new Date(x.completedAt).toLocaleDateString('en-AU'):'Date unknown')+'</div></div>').join(''):'<div class="empty">No completed movement sessions recorded on this device yet.</div>';
-$('#next').textContent=exerciseCount===0&&latest.length===0?'Start your first workout or movement session. Your dashboard will populate as you record activity.':weeks[current-1]===100?'Your current Press Lab week is fully checked. Review technique and readiness before moving on.':'Continue Week '+current+' in Press Lab and record weights, reps and effort for better trend analysis.';
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101d1c">
+<title>Training Overview · De-Movement</title>
+<link rel="stylesheet" href="press-lab/press-control.css">
+<style>
+.dashboard-hero{display:flex;justify-content:space-between;flex-wrap:wrap;align-items:end;gap:18px;margin:42px 0 26px}
+.dashboard-hero h1{font-size:clamp(2.8rem,7vw,5rem);margin:12px 0}.dashboard-hero p{color:var(--muted);max-width:560px}
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.snapshot-row{border-bottom:1px solid var(--border);padding:13px 0;display:flex;justify-content:space-between;gap:14px;align-items:baseline}
+.snapshot-row:last-child{border:0}.snapshot-row strong{font-size:14px}.snapshot-row small{color:var(--muted)}
+.progress-track{background:#315044;height:10px;border-radius:99px;overflow:hidden}.progress-fill{height:100%;background:var(--lime);border-radius:99px}
+@media(max-width:760px){.data-grid{grid-template-columns:1fr}.dashboard-hero{margin:26px 0}}
+</style>
+</head>
+<body>
+<header class="site-header"><div class="wrap header-inner"><a class="brand" href="index.html"><span class="brand-icon">◉</span><span>DE-MOVEMENT<small>BY DE-OMEGA-POINT</small></span></a><nav class="utility-nav"><a href="index.html">Home</a><a href="press-lab/">Press Control</a><a href="knee-yoga/">Knee Yoga</a></nav></div></header>
+<main class="wrap">
+<section class="dashboard-hero">
+<div><div class="eyebrow">TRAINING INTELLIGENCE / LOCAL-FIRST</div><h1>Your movement.<br><span class="accent">One view.</span></h1><p>All completed work in one place. No invented performance, automatic skill unlocks or hidden progress scores.</p></div>
+<div class="hero-actions"><a class="primary" href="press-lab/" style="text-decoration:none">Start Press Control ↗</a><a class="soft" href="index.html" style="text-decoration:none">Choose movement</a></div>
+</section>
+<section class="metrics" aria-label="Training statistics">
+<div class="metric"><small>Press sessions · 7 days</small><strong id="press-count">0</strong><em>Completed records</em></div>
+<div class="metric"><small>Main app movement sessions</small><strong id="movement-count">0</strong><em>Recorded sessions</em></div>
+<div class="metric"><small>Best wall hold</small><strong id="best-wall">—</strong><em>Actual seconds</em></div>
+<div class="metric"><small>Best compression</small><strong id="best-compression">—</strong><em>Recorded repetitions</em></div>
+</section>
+<section class="data-grid">
+<article class="panel"><p class="kicker">PRESS CONTROL</p><h2>Performance and recovery</h2><div id="performance"></div></article>
+<article class="panel"><p class="kicker">YOUR HISTORY</p><h2>What you actually did</h2><div id="history"></div></article>
+</section>
+<section class="panel"><div class="panel-top"><div><p class="kicker">TRAINING PATHWAY</p><h2>Foundation, not a countdown.</h2></div><span class="pill">Wall-assisted baseline</span></div>
+<div class="layout-two"><div><p class="subtle">The next assisted progression requires consistent support control, wrist tolerance, active compression and a reliable exit. Dates alone never trigger advancement.</p><div id="gates"></div></div>
+<div class="callout"><strong>Keep your data honest.</strong><p>Legacy Press Lab checks are preserved separately because they lack the standardised dates and measurements needed for the new charts. Records stay in this browser unless exported. Other browsers and devices may show different histories.</p><p><a href="press-lab/classic.html">Open original Press Lab ↗</a></p></div></div>
+</section>
+<footer class="footer"><span>DE-MOVEMENT · Human agency first</span><span>Review symptoms and recovery before increasing load.</span></footer>
+</main>
+<script>
+(function(){'use strict';
+const $=s=>document.querySelector(s),safe=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+function read(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}}
+const pc=read('demovement.presscontrol.v2')||{},sessions=Array.isArray(pc.sessions)?pc.sessions.filter(s=>s&&typeof s==='object'&&/^\d{4}-\d\d-\d\d$/.test(s.date||'')):[],move=read('demovement.history.v1'),history=Array.isArray(move)?move.filter(Boolean):[],legacy=read('de-movement-press-lab-v1');
+const allExercises=sessions.flatMap(s=>Array.isArray(s.entries)?s.entries.filter(e=>e.done):[]);
+const best=(id,field)=>{const n=allExercises.filter(e=>e.id===id&&e[field]!==''&&e[field]!==undefined).map(e=>Number(e[field])).filter(v=>Number.isFinite(v)&&v>0);return n.length?Math.max(...n):null};
+const cutoff=Date.now()-7*86400000,recent=sessions.filter(s=>Date.parse(s.date+'T12:00:00')>=cutoff);
+$('#press-count').textContent=recent.filter(s=>s.day!=='optional').length;
+$('#movement-count').textContent=history.length;
+$('#best-wall').textContent=best('wall','seconds')!==null?best('wall','seconds')+'s':'—';
+$('#best-compression').textContent=best('compression','reps')!==null?best('compression','reps'):'—';
+const sorted=sessions.slice().sort((a,b)=>Date.parse(b.completedAt||b.date)-Date.parse(a.completedAt||a.date));
+const statuses={baseline:'Back to baseline',worse:'Reduce load',concern:'Assessment needed',pending:'Next-morning check pending'};
+const latest=sorted[0],pending=sessions.filter(s=>!s.nextMorning||s.nextMorning==='pending').length;
+$('#performance').innerHTML='<div class="snapshot-row"><strong>Press workouts recorded</strong><strong>'+sessions.length+'</strong></div><div class="snapshot-row"><strong>Latest next-morning response</strong><small>'+safe(latest?statuses[latest.nextMorning]||'Pending':'Not logged')+'</small></div><div class="snapshot-row"><strong>Sessions awaiting recovery review</strong><strong>'+pending+'</strong></div><div class="snapshot-row"><strong>Original Press Lab checked entries</strong><strong>'+(legacy&&legacy.logs&&typeof legacy.logs==='object'?Object.values(legacy.logs).filter(x=>x&&x.done).length:0)+'</strong></div><div style="margin-top:23px"><a class="primary" href="press-lab/" style="display:inline-block;text-decoration:none">Log or review a workout ↗</a></div>';
+const recentHistory=[...sorted.map(s=>({date:s.date,title:(s.day||'Press')+' · Press Control',desc:(s.entries||[]).filter(e=>e.done).length+' exercises · '+(statuses[s.nextMorning]||'Recovery pending')})),...history.map(s=>({date:s.completedAt||'',title:s.title||'Movement session',desc:(s.durationMinutes||0)+' min · Main app'}))].sort((a,b)=>Date.parse(b.date)-Date.parse(a.date));
+$('#history').innerHTML=recentHistory.length?recentHistory.slice(0,9).map(s=>'<div class="snapshot-row"><div><strong>'+safe(s.title)+'</strong><div class="subtle">'+safe(s.desc)+'</div></div><small>'+safe(s.date&&Number.isFinite(Date.parse(s.date))?new Date(s.date+'').toLocaleDateString('en-AU'):'Date unknown')+'</small></div>').join(''):'<div class="empty"><strong>No sessions recorded yet</strong>Start a supported workout and save your actual exercises to see the trend.</div>';
+const n=pc.gates&&typeof pc.gates==='object'?Object.values(pc.gates).filter(Boolean).length:0;
+$('#gates').innerHTML='<div class="stats-line"><span class="pill">'+n+' of 6 foundation checks logged</span><span class="pill">Human review required</span></div><div class="progress-track"><div class="progress-fill" style="width:'+Math.min(100,n/6*100)+'%"></div></div>';
 })();
-</script></body></html>
+</script>
+</body></html>
