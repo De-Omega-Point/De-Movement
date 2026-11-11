@@ -14,6 +14,7 @@ for(const feature of ['nextMorning','pikeReach','compression','boxhold','rir','q
 assert(!script.includes("EX('float'"),'unsupported float must not appear in foundation plan');
 assert(css.includes('prefers-reduced-motion'));
 assert(dashboard.includes('demovement.presscontrol.v2'));
+assert(read('account.js').includes("'demovement.presscontrol.v2'")&&read('account.js').includes("'de-movement-press-lab-v1'"),'local account export and wipe must include training records');
 assert(sw.includes("'./press-lab/press-control.js'"));
 assert(read('press-lab/classic.html').includes('de-movement-press-lab-v1'),'classic data compatibility missing');
 const saved=new Map(),elements=new Map();
@@ -49,4 +50,6 @@ assert.equal(state.sessions[0].entries.find(e=>e.id==='wall').seconds,'18');
 assert.equal(state.sessions[0].entries.find(e=>e.id==='wall').done,true);
 assert.equal(state.sessions[0].entries.find(e=>e.id==='compression').done,false,'unticked work became completed');
 assert.equal(state.sessions[0].nextMorning,'pending','next morning should not be assumed healthy');
+vm.runInNewContext(script,ctx,{filename:'press-control.js'});
+assert.equal(fakeElement('#metric-hold').textContent,'18s','recorded performance did not survive reload');
 console.log('Press Control smoke tests passed');
