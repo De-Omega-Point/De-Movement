@@ -35,6 +35,7 @@ const ctx={
 vm.runInNewContext(script,ctx,{filename:'press-control.js'});
 assert.equal(saved.size,0,'new user must not be assigned invented workouts');
 let work=fakeElement('#today-content');
+fakeElement('#day-select').handlers.change({target:{value:'monday'}});
 assert(work.innerHTML.includes('Chest-to-wall handstand'),'supported foundation drill missing');
 work.handlers.change({target:{dataset:{ex:'wall',field:'done'},type:'checkbox',checked:true}});
 assert.equal(JSON.parse(saved.get('demovement.presscontrol.v2')).sessions.length,0,'ticking an exercise must not auto-create session');
