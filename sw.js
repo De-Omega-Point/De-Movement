@@ -1,4 +1,4 @@
-const VERSION='demovement-v0.9.0-press-control-20261111';
+const VERSION='demovement-v0.9.0-press-control-fixes-20261112';
 const CORE=[
   './','./index.html','./styles.css','./engine.js','./movements.js','./composer.js','./runner.js',
   './paths.js','./passport.js','./flow.js','./training-data.js','./training-intelligence.js',
