@@ -111,7 +111,7 @@ function chartSvg(points,label){
  const min=Math.min(...points.map(p=>p.value)),max=Math.max(...points.map(p=>p.value)),lo=min===max?min-1:min-(max-min)*.12,hi=min===max?max+1:max+(max-min)*.16,W=660,H=240,L=60,R=20,T=23,B=42,ww=W-L-R,hh=H-T-B;
  const x=i=>L+(points.length===1?ww/2:i*ww/(points.length-1)),y=v=>T+(hi-v)/(hi-lo)*hh;
  const line=points.map((p,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(p.value).toFixed(1)).join(' ');
- let grid='';for(let i=0;i<=4;i++){const n=lo+(hi-lo)*i,yy=y(n);grid+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'" class="chart-grid"/><text x="'+(L-9)+'" y="'+(yy+4).toFixed(1)+'" text-anchor="end" class="chart-label">'+esc(fmt(n,1))+'</text>'}
+ let grid='';for(let i=0;i<=4;i++){const n=lo+(hi-lo)*i/4,yy=y(n);grid+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'" class="chart-grid"/><text x="'+(L-9)+'" y="'+(yy+4).toFixed(1)+'" text-anchor="end" class="chart-label">'+esc(fmt(n,1))+'</text>'}
  const marks=points.map((p,i)=>'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.value).toFixed(1)+'" r="5" class="chart-dot"><title>'+esc(dateLabel(p.date)+': '+p.value+' '+label)+'</title></circle>').join('');
  const shown=points.map((p,i)=>i===0||i===points.length-1||points.length<5||i%3===0?'<text x="'+x(i).toFixed(1)+'" y="'+(H-12)+'" text-anchor="middle" class="chart-date">'+esc(p.date.slice(5).split('-').reverse().join('/'))+'</text>':'').join('');
  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(label)+' measured across '+points.length+' recorded dates">'+grid+'<path d="'+line+'" class="chart-line"/>'+marks+shown+'</svg>';
@@ -133,8 +133,14 @@ function reviewVerdict(){
  if(!last.length)return ['No recordings yet','Complete and log your first supported session. No readiness judgment is possible before you have comparable results.',''];
  if(last.some(s=>['worse','concern'].includes(s.nextMorning)&&Date.parse(s.date+'T12:00:00')>=Date.now()-10*86400000))return ['Reduce or assess','Recent next-morning recovery was worse or needs review. Reduce the provoking load and assess before progressing.','warning'];
  const same=last.filter(s=>s.day===last[0].day).slice(0,2);
+ // Compare the actual completed work; a plan-day label alone is not evidence.
+ const completed=s=>(Array.isArray(s.entries)?s.entries:[]).filter(e=>e&&e.done);
+ const ids=s=>completed(s).map(e=>e.id).sort();
+ const first=same.length?ids(same[0]):[],second=same.length===2?ids(same[1]):[];
+ const plan=PLAN[last[0].day];
+ const comparable=first.length>0&&first.length===second.length&&first.every((id,i)=>id===second[i]&&plan.ex.some(e=>e.id===id))&&first.some(id=>plan.ex.some(e=>e.id===id&&e.kind!=='prep'));
  const good=s=>s.nextMorning==='baseline'&&s.readiness?.symptoms==='baseline'&&(s.entries||[]).filter(e=>e.done).every(e=>e.quality==='good'&&(e.id==='press'||e.id==='pikepush'||e.id==='row'||e.id==='pull'||e.id==='hinge'||e.id==='squat'?e.rir!==''&&Number(e.rir)>=2:true));
- if(same.length===2&&same.every(good))return ['Consider one small change','Two comparable '+PLAN[last[0].day].name+' sessions show controlled logged technique and recovery to baseline. Review support, wrist tolerance and safe exit before making any small assisted progression.','ok'];
+ if(same.length===2&&comparable&&same.every(good))return ['Consider one small change','Two comparable '+PLAN[last[0].day].name+' sessions contain the same completed exercises with controlled logged technique and recovery to baseline. This applies only to that recorded work; confirm the same variation and support were used. Review support, wrist tolerance and safe exit before making any small assisted progression.','ok'];
  return ['Maintain and measure','Keep the current supported variation. Log next-morning recovery and controlled technique on two comparable sessions before considering an increase.',''];
 }
 function renderReview(){
